@@ -1,11 +1,24 @@
 /**
- * ThemeManager class to handle theme selection and switching
+ * ThemeManager class that works with the state management system
  */
 class ThemeManager {
-    constructor() {
+    constructor(stateManager) {
+        this.stateManager = stateManager;
         this.themes = {};
         this.currentTheme = null;
-        this.activeThemeId = null;
+        
+        // Subscribe to theme changes from state using onStateUpdate instead of update
+        this.stateManager.subscribe({
+            update: this.onStateUpdate.bind(this)
+        }, 'theme');
+        
+        this.stateManager.subscribe({
+            update: this.onStateUpdate.bind(this)
+        }, 'appState');
+        
+        if (this.stateManager.state.debug) {
+            console.log('ThemeManager: Initialized with state manager');
+        }
     }
 
     /**
@@ -15,6 +28,15 @@ class ThemeManager {
      */
     registerTheme(id, theme) {
         this.themes[id] = theme;
+        
+        // If this is the current theme according to state, activate it
+        if (id === this.stateManager.state.currentTheme && !this.currentTheme) {
+            this.switchTheme(id);
+        }
+        
+        if (this.stateManager.state.debug) {
+            console.log(`ThemeManager: Registered theme "${id}"`);
+        }
     }
 
     /**
@@ -27,20 +49,19 @@ class ThemeManager {
     }
 
     /**
-     * Get all registered themes
-     * @returns {Object} Object with all themes
-     */
-    getAllThemes() {
-        return this.themes;
-    }
-
-    /**
      * Initialize all themes with a p5.js canvas
      * @param {p5} canvas - The p5.js instance
      */
     initThemes(canvas) {
         for (const id in this.themes) {
             this.themes[id].init(canvas);
+        }
+        
+        // Apply current state to theme
+        this.applyState();
+        
+        if (this.stateManager.state.debug) {
+            console.log('ThemeManager: All themes initialized with canvas');
         }
     }
 
@@ -53,7 +74,7 @@ class ThemeManager {
         // Check if theme exists
         const newTheme = this.getTheme(id);
         if (!newTheme) {
-            console.error(`Theme with id "${id}" does not exist.`);
+            console.error(`ThemeManager: Theme with id "${id}" does not exist.`);
             return false;
         }
 
@@ -65,18 +86,31 @@ class ThemeManager {
 
         // Set new theme as current
         this.currentTheme = newTheme;
-        this.activeThemeId = id;
         
-        // Return true to indicate successful switch
+        if (this.stateManager.state.debug) {
+            console.log(`ThemeManager: Switched to theme "${id}"`);
+        }
+        
         return true;
     }
 
     /**
-     * Get the currently active theme
-     * @returns {Theme} The active theme
+     * Apply the current state to the active theme
      */
-    getCurrentTheme() {
-        return this.currentTheme;
+    applyState() {
+        const state = this.stateManager.getState();
+        
+        // Switch theme if needed
+        if (this.currentTheme !== this.themes[state.currentTheme]) {
+            this.switchTheme(state.currentTheme);
+        }
+        
+        // Start or stop theme based on running state
+        if (state.isRunning) {
+            this.startCurrentTheme();
+        } else {
+            this.stopCurrentTheme();
+        }
     }
 
     /**
@@ -85,6 +119,11 @@ class ThemeManager {
     startCurrentTheme() {
         if (this.currentTheme) {
             this.currentTheme.start();
+            
+            if (this.stateManager.state.debug) {
+                console.log('ThemeManager: Started current theme');
+            }
+            
             return true;
         }
         return false;
@@ -96,8 +135,29 @@ class ThemeManager {
     stopCurrentTheme() {
         if (this.currentTheme) {
             this.currentTheme.stop();
+            
+            if (this.stateManager.state.debug) {
+                console.log('ThemeManager: Stopped current theme');
+            }
+            
             return true;
         }
         return false;
+    }
+    
+    /**
+     * Observer method called when state changes - renamed to avoid collision
+     * @param {Object} newState - New application state
+     * @param {Object} oldState - Previous application state
+     */
+    onStateUpdate(newState, oldState) {
+        // Check if theme-related state has changed
+        const themeChanged = newState.currentTheme !== oldState.currentTheme;
+        const runningChanged = newState.isRunning !== oldState.isRunning;
+        
+        // If any relevant state has changed, apply state
+        if (themeChanged || runningChanged) {
+            this.applyState();
+        }
     }
 }

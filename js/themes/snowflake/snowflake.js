@@ -145,10 +145,12 @@ class Snowflake {
 
 /**
  * Snowflakes Theme class that extends the base Theme
+ * Integrated with state management system
  */
 class SnowflakesTheme extends Theme {
-    constructor() {
+    constructor(stateManager = null) {
         super();
+        this.stateManager = stateManager;
         this.snowflakes = [];
         this.numSnowflakes = 200; // Default number of snowflakes
         this.sizeMultiplier = 1; // Default size multiplier
@@ -160,6 +162,80 @@ class SnowflakesTheme extends Theme {
         // Default colors
         this.snowflakeColor = { r: 255, g: 255, b: 255 }; // White
         this.backgroundColor = { r: 0, g: 10, b: 40 }; // Dark blue
+        
+        // Subscribe to state changes if state manager is provided
+        if (this.stateManager) {
+            // Use onStateUpdate instead of update to avoid method name collision
+            this.stateManager.subscribe({
+                update: this.onStateUpdate.bind(this)
+            }, 'theme');
+            
+            this.stateManager.subscribe({
+                update: this.onStateUpdate.bind(this)
+            }, 'appState');
+            
+            if (this.stateManager.state.debug) {
+                console.log('SnowflakesTheme: Initialized with state manager');
+            }
+        }
+    }
+    
+    /**
+     * Initialize the theme with a p5.js canvas
+     * @param {p5} canvas - The p5.js instance
+     */
+    init(canvas) {
+        // Call the parent init method
+        super.init(canvas);
+        
+        // Apply state configuration if available
+        if (this.stateManager) {
+            this.applyStateConfig();
+            
+            if (this.stateManager.state.debug) {
+                console.log('SnowflakesTheme: Applied state configuration');
+            }
+        }
+    }
+    
+    /**
+     * Apply the current state configuration to the theme
+     */
+    applyStateConfig() {
+        if (!this.stateManager) return;
+        
+        const config = this.stateManager.getStateSection('themeConfigs.snowflakes');
+        if (!config) return;
+        
+        // Set background color
+        this.setBackgroundColor(config.backgroundColor);
+        
+        // Set snowflake color
+        this.setSnowflakeColor(config.snowflakeColor);
+        
+        // Set number of snowflakes
+        this.setNumberOfSnowflakes(config.count);
+        
+        // Set size multiplier - convert from our 1-40 range to 0.1-4 range
+        const sizeMultiplier = config.size / 10;
+        this.setSizeMultiplier(sizeMultiplier);
+        
+        // Set speed multiplier
+        this.setSpeedMultiplier(config.speed);
+        
+        // Set wobble intensity - convert from our 0-10 range to 0-1 range
+        const wobbleIntensity = config.wobbleIntensity / 10;
+        this.setWobbleIntensity(wobbleIntensity);
+        
+        // Set wind properties
+        this.setWind(config.windStrength, config.windDirection);
+        
+        // Set running state
+        if (this.stateManager.state.isRunning) {
+            this.start();
+        } else {
+            this.stop();
+        }
     }
 
     // Setter methods for controller values
@@ -196,7 +272,6 @@ class SnowflakesTheme extends Theme {
         }
     }
     
-    // Set wobble intensity
     setWobbleIntensity(intensity) {
         this.wobbleIntensity = intensity;
         // Update existing snowflakes
@@ -205,7 +280,6 @@ class SnowflakesTheme extends Theme {
         }
     }
     
-    // Set wind properties
     setWind(strength, direction) {
         this.windStrength = strength;
         this.windDirection = direction;
@@ -215,7 +289,6 @@ class SnowflakesTheme extends Theme {
         }
     }
     
-    // Set snowflake color
     setSnowflakeColor(hexColor) {
         // Convert hex color to RGB
         const r = parseInt(hexColor.substr(1, 2), 16);
@@ -230,7 +303,6 @@ class SnowflakesTheme extends Theme {
         }
     }
     
-    // Set background color
     setBackgroundColor(hexColor) {
         // Convert hex color to RGB
         const r = parseInt(hexColor.substr(1, 2), 16);
@@ -296,5 +368,30 @@ class SnowflakesTheme extends Theme {
     cleanup() {
         // Nothing specific to clean up
         this.snowflakes = [];
+    }
+    
+    /**
+     * Observer method called when state changes - renamed to avoid collision with animation update
+     * @param {Object} newState - New application state
+     * @param {Object} oldState - Previous application state
+     */
+    onStateUpdate(newState, oldState) {
+        // Only process if we're the current theme
+        if (newState.currentTheme !== 'snowflakes') return;
+        
+        // Check if theme-related state has changed
+        const configChanged = 
+            JSON.stringify(newState.themeConfigs.snowflakes) !== 
+            JSON.stringify(oldState.themeConfigs.snowflakes);
+        const runningChanged = newState.isRunning !== oldState.isRunning;
+        
+        // If any relevant state has changed, update the theme
+        if (configChanged || runningChanged) {
+            this.applyStateConfig();
+            
+            if (newState.debug) {
+                console.log('SnowflakesTheme: Updated from state change');
+            }
+        }
     }
 }
