@@ -28,22 +28,34 @@ jobs:
         env:
           BRANCH_NAME: ${{ env.BRANCH_NAME }}
       
-      - name: Checkout gh-pages
+      - name: Create temporary directory for feature files
+        run: |
+          mkdir -p temp-preview-dir
+          # Copy files to the temporary directory, excluding .git and other unnecessary files
+          rsync -av --exclude='.git' --exclude='.github' --exclude='node_modules' ./ temp-preview-dir/
+      
+      - name: Checkout gh-pages branch
         uses: actions/checkout@v3
         with:
           ref: gh-pages
           path: gh-pages-branch
+          clean: false
       
-      - name: Create deploy directory
+      - name: Prepare preview directory
         run: |
+          # Create the target directory
           mkdir -p gh-pages-branch/previews/${{ env.FEATURE_NAME }}
-          # Copy all files except .github directory and gh-pages-branch
-          rsync -av --exclude='.github' --exclude='gh-pages-branch' ./ gh-pages-branch/previews/${{ env.FEATURE_NAME }}/
+          # Remove old content if it exists
+          rm -rf gh-pages-branch/previews/${{ env.FEATURE_NAME }}/*
+          # Copy the files from our temp directory
+          cp -r temp-preview-dir/* gh-pages-branch/previews/${{ env.FEATURE_NAME }}/
       
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./gh-pages-branch
-          publish_branch: gh-pages
-          keep_files: true
+      - name: Commit and push to gh-pages
+        run: |
+          cd gh-pages-branch
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add .
+          # Continue even if there are no changes to commit
+          git commit -m "Deploy preview for ${{ env.BRANCH_NAME }}" || echo "No changes to commit"
+          git push
