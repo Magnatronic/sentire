@@ -16,6 +16,7 @@
                 <label for="theme-select">Theme:</label>
                 <select id="theme-select">
                     <option value="snowflakes">Snowflakes</option>
+                    <option value="underwater">Underwater</option>
                     <!-- More themes will be added here later -->
                 </select>
             </div>
@@ -87,6 +88,92 @@
                     </div>
                 </div>
             </div>
+            
+            <div class="theme-controls underwater-controls" style="display: none;">
+                <div class="color-pickers">
+                    <div class="color-picker-container">
+                        <label for="underwater-background-color">Background Color:</label>
+                        <input type="color" id="underwater-background-color" value="#003264">
+                    </div>
+                    
+                    <div class="color-picker-container">
+                        <label for="bubble-color">Bubble Color:</label>
+                        <input type="color" id="bubble-color" value="#DCEFFF">
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="bubble-count">Number of Bubbles:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="bubble-count" min="50" max="300" value="100" class="slider">
+                        <span class="slider-value" id="bubble-count-value">100</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="fish-count">Number of Fish:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="fish-count" min="0" max="20" value="5" class="slider">
+                        <span class="slider-value" id="fish-count-value">5</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="bubble-size">Bubble Size:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="bubble-size" min="1" max="40" value="10" class="slider">
+                        <span class="slider-value" id="bubble-size-value">10</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="fish-size">Fish Size:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="fish-size" min="1" max="20" value="10" class="slider">
+                        <span class="slider-value" id="fish-size-value">10</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="bubble-speed">Bubble Speed:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="bubble-speed" min="0.5" max="3" value="1" step="0.1" class="slider">
+                        <span class="slider-value" id="bubble-speed-value">1</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="fish-speed">Fish Speed:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="fish-speed" min="0.5" max="3" value="1" step="0.1" class="slider">
+                        <span class="slider-value" id="fish-speed-value">1</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="underwater-wobble-intensity">Bubble Wobble:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="underwater-wobble-intensity" min="0" max="10" value="5" class="slider">
+                        <span class="slider-value" id="underwater-wobble-intensity-value">5</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="current-strength">Current Strength:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="current-strength" min="0" max="10" value="0" class="slider">
+                        <span class="slider-value" id="current-strength-value">0</span>
+                    </div>
+                </div>
+                
+                <div class="slider-container">
+                    <label for="current-direction">Current Direction:</label>
+                    <div class="slider-with-value">
+                        <input type="range" id="current-direction" min="0" max="360" value="0" class="slider">
+                        <span class="slider-value" id="current-direction-value">0°</span>
+                    </div>
+                </div>
+            </div>
         </div>
         
         <!-- Main content area for canvas -->
@@ -98,6 +185,7 @@
     <!-- Core App Files -->
     <script src="js/themes/theme.js"></script>
     <script src="js/themes/snowflake/snowflake.js"></script>
+    <script src="js/themes/underwater/underwater.js"></script>
     <script src="js/themes/themeManager.js"></script>
     <script src="js/sketch.js"></script>
     

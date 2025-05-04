@@ -37,10 +37,28 @@ class UIController {
             'wind-direction': 'windDirection'
         };
         
+        // Map for underwater controls
+        this.underwaterControlMap = {
+            'underwater-background-color': 'backgroundColor',
+            'bubble-color': 'bubbleColor',
+            'bubble-count': 'bubbleCount',
+            'fish-count': 'fishCount',
+            'bubble-size': 'bubbleSize',
+            'fish-size': 'fishSize',
+            'bubble-speed': 'bubbleSpeed',
+            'fish-speed': 'fishSpeed',
+            'underwater-wobble-intensity': 'wobbleIntensity',
+            'current-strength': 'currentStrength',
+            'current-direction': 'currentDirection'
+        };
+        
         // Special formatting for some controls
         this.valueFormatters = {
             'wind-direction': (value) => `${value}°`,
-            'snowflake-speed': (value) => value.toFixed(1)
+            'snowflake-speed': (value) => value.toFixed(1),
+            'current-direction': (value) => `${value}°`,
+            'bubble-speed': (value) => value.toFixed(1),
+            'fish-speed': (value) => value.toFixed(1)
         };
         
         // Initialize UI based on current state
@@ -119,8 +137,9 @@ class UIController {
             });
         }
         
-        // Set up snowflake controls
+        // Set up theme controls
         this.setupThemeControlListeners('snowflakes');
+        this.setupThemeControlListeners('underwater');
         
         if (this.stateManager.state.debug) {
             console.log('UIController: Event listeners set up');
@@ -135,15 +154,18 @@ class UIController {
         const container = document.querySelector(`.${themeName}-controls`);
         if (!container) return;
         
+        // Select the appropriate control map based on theme name
+        const controlMap = themeName === 'underwater' ? this.underwaterControlMap : this.snowflakeControlMap;
+        
         // Color pickers
         const colorPickers = container.querySelectorAll('input[type="color"]');
         colorPickers.forEach(picker => {
             picker.addEventListener('input', (e) => {
                 const controlId = e.target.id;
-                const stateKey = this.snowflakeControlMap[controlId];
+                const stateKey = controlMap[controlId];
                 
                 if (stateKey) {
-                    this.stateManager.setThemeParam(stateKey, e.target.value);
+                    this.stateManager.setThemeParam(stateKey, e.target.value, themeName);
                 }
             });
         });
@@ -153,7 +175,7 @@ class UIController {
         sliders.forEach(slider => {
             slider.addEventListener('input', (e) => {
                 const controlId = e.target.id;
-                const stateKey = this.snowflakeControlMap[controlId];
+                const stateKey = controlMap[controlId];
                 
                 if (stateKey) {
                     // Update display value
@@ -168,7 +190,8 @@ class UIController {
                     // Update state
                     this.stateManager.setThemeParam(
                         stateKey, 
-                        parseFloat(e.target.value)
+                        parseFloat(e.target.value),
+                        themeName
                     );
                 }
             });
@@ -201,9 +224,12 @@ class UIController {
         const config = this.stateManager.getStateSection(`themeConfigs.${themeName}`);
         if (!config) return;
         
+        // Select the appropriate control map based on theme name
+        const controlMap = themeName === 'underwater' ? this.underwaterControlMap : this.snowflakeControlMap;
+        
         // We need to map state keys back to control IDs
         const reverseMap = {};
-        Object.entries(this.snowflakeControlMap).forEach(([controlId, stateKey]) => {
+        Object.entries(controlMap).forEach(([controlId, stateKey]) => {
             reverseMap[stateKey] = controlId;
         });
         

@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Register snowflakes theme (now directly integrated with state management)
     themeManager.registerTheme('snowflakes', new SnowflakesTheme(stateManager));
     
+    // Register underwater theme
+    themeManager.registerTheme('underwater', new UnderwaterTheme(stateManager));
+    
     // Initialize Debug Panel but keep it hidden (only if enabled by feature flag)
     let debugPanel;
     if (ENABLE_DEBUG_PANEL) {
