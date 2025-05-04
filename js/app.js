@@ -5,7 +5,7 @@
 
 // Feature flag to control debug panel visibility
 // Set to false before merging to main branch
-const ENABLE_DEBUG_PANEL = true;
+const ENABLE_DEBUG_PANEL = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Music Therapy Sensory App initialized');
