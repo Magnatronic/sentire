@@ -1,0 +1,50 @@
+name: Deploy Feature Branch Preview
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+
+# Add explicit permissions for this workflow
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+      
+      - name: Get branch name
+        id: branch-name
+        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+      
+      - name: Extract feature name
+        id: extract-name
+        run: echo "FEATURE_NAME=${BRANCH_NAME#feature/}" >> $GITHUB_ENV
+        env:
+          BRANCH_NAME: ${{ env.BRANCH_NAME }}
+      
+      - name: Checkout gh-pages
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          path: gh-pages
+      
+      - name: Create deploy directory
+        run: |
+          mkdir -p gh-pages/previews/${{ env.FEATURE_NAME }}
+          cp -R ./* gh-pages/previews/${{ env.FEATURE_NAME }}/
+          rm -rf gh-pages/previews/${{ env.FEATURE_NAME }}/.github
+          rm -rf gh-pages/previews/${{ env.FEATURE_NAME }}/gh-pages
+      
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
+          publish_branch: gh-pages
+          keep_files: true
