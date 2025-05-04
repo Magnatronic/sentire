@@ -41,21 +41,40 @@ jobs:
           path: gh-pages-branch
           clean: false
       
+      # Fix submodule issues before modifying the branch
+      - name: Check and remove any existing submodules
+        run: |
+          if [ -f "gh-pages-branch/.gitmodules" ]; then
+            cat gh-pages-branch/.gitmodules || true
+          fi
+          
+          # Remove any existing preview directory to avoid submodule issues
+          if [ -d "gh-pages-branch/previews/${{ env.FEATURE_NAME }}" ]; then
+            cd gh-pages-branch
+            git rm -rf --cached previews/${{ env.FEATURE_NAME }} || true
+            rm -rf previews/${{ env.FEATURE_NAME }}
+            cd ..
+          fi
+      
       - name: Prepare preview directory
         run: |
           # Create the target directory
           mkdir -p gh-pages-branch/previews/${{ env.FEATURE_NAME }}
-          # Remove old content if it exists
-          rm -rf gh-pages-branch/previews/${{ env.FEATURE_NAME }}/*
           # Copy the files from our temp directory
           cp -r temp-preview-dir/* gh-pages-branch/previews/${{ env.FEATURE_NAME }}/
+          
+          # Create a .gitkeep file to ensure the directory is tracked
+          touch gh-pages-branch/previews/${{ env.FEATURE_NAME }}/.gitkeep
       
       - name: Commit and push to gh-pages
         run: |
           cd gh-pages-branch
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add .
+          
+          # Add files individually to avoid submodule creation
+          git add -f previews/${{ env.FEATURE_NAME }}/
+          
           # Continue even if there are no changes to commit
           git commit -m "Deploy preview for ${{ env.BRANCH_NAME }}" || echo "No changes to commit"
           git push
