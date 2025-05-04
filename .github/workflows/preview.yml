@@ -32,19 +32,18 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: gh-pages
-          path: gh-pages
+          path: gh-pages-branch
       
       - name: Create deploy directory
         run: |
-          mkdir -p gh-pages/previews/${{ env.FEATURE_NAME }}
-          cp -R ./* gh-pages/previews/${{ env.FEATURE_NAME }}/
-          rm -rf gh-pages/previews/${{ env.FEATURE_NAME }}/.github
-          rm -rf gh-pages/previews/${{ env.FEATURE_NAME }}/gh-pages
+          mkdir -p gh-pages-branch/previews/${{ env.FEATURE_NAME }}
+          # Copy all files except .github directory and gh-pages-branch
+          rsync -av --exclude='.github' --exclude='gh-pages-branch' ./ gh-pages-branch/previews/${{ env.FEATURE_NAME }}/
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./gh-pages
+          publish_dir: ./gh-pages-branch
           publish_branch: gh-pages
           keep_files: true
