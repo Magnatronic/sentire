@@ -77,6 +77,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.sentireApp.audioDebugPanel = audioDebugPanel;
     }
     
+    // Initialize the Sidebar Audio Panel for all themes
+    const sidebarAudioPanel = new SidebarAudioPanel(stateManager, audioManager);
+    window.sentireApp.sidebarAudioPanel = sidebarAudioPanel;
+    
     // Auto-save state when user leaves the page
     window.addEventListener('beforeunload', () => {
         stateStorage.saveState();
