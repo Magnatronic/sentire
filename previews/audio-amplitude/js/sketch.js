@@ -11,6 +11,7 @@ let canvas;
 // Reference to app components from global scope
 let themeManager;
 let stateManager;
+let audioManager; // Added reference to audio manager
 
 /**
  * p5.js setup function - runs once at the start
@@ -27,6 +28,7 @@ function setup() {
   if (window.sentireApp) {
     stateManager = window.sentireApp.stateManager;
     themeManager = window.sentireApp.themeManager;
+    audioManager = window.sentireApp.audioManager; // Get reference to audio manager
     
     // Initialize all themes with the p5.js instance
     themeManager.initThemes(this);
@@ -55,6 +57,19 @@ function draw() {
     // Update and draw the current theme
     currentTheme.update();
     currentTheme.draw();
+    
+    // Draw audio visualizer if audio manager exists and is initialized
+    if (audioManager && audioManager.isInitialized) {
+      // Draw audio visualizer in bottom right corner of the canvas
+      const visualizerWidth = 200;
+      const visualizerHeight = 100;
+      const padding = 20;
+      const visualizerX = width - visualizerWidth - padding;
+      const visualizerY = height - visualizerHeight - padding;
+      
+      // Draw audio visualizer
+      audioManager.drawDebugVisualizer(this, visualizerX, visualizerY, visualizerWidth, visualizerHeight);
+    }
   }
 }
 
