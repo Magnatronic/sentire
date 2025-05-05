@@ -17,6 +17,7 @@ class AudioManager {
         this.analyser = null;
         this.microphone = null;
         this.volumeData = new Uint8Array(0);
+        this.mediaStream = null;      // Store reference to the media stream
         
         // Volume detection properties
         this.currentVolume = 0;       // Current volume level (0-100)
@@ -76,30 +77,34 @@ class AudioManager {
      * @returns {Promise<boolean>} True if initialization was successful
      */
     async init() {
+        // Only create AudioContext when specifically requested
+        // This avoids triggering the permission prompt on page load
         try {
-            // Create audio context with cross-browser compatibility
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.audioContext = new AudioContext();
-            
-            // Create analyzer node
-            this.analyser = this.audioContext.createAnalyser();
-            this.analyser.fftSize = 1024;
-            this.analyser.smoothingTimeConstant = 0.8;
-            
-            // Create buffer for volume data
-            const bufferLength = this.analyser.frequencyBinCount;
-            this.volumeData = new Uint8Array(bufferLength);
-            
-            // Apply state configuration if available
-            if (this.stateManager?.state.audioConfig) {
-                this.applyStateConfig();
-            }
-            
-            this.isInitialized = true;
-            
-            // Log success if debug mode is enabled
-            if (this.debugMode) {
-                console.log('AudioManager: Audio context and analyzer initialized');
+            if (!this.audioContext) {
+                // Create audio context with cross-browser compatibility
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+                
+                // Create analyzer node
+                this.analyser = this.audioContext.createAnalyser();
+                this.analyser.fftSize = 1024;
+                this.analyser.smoothingTimeConstant = 0.8;
+                
+                // Create buffer for volume data
+                const bufferLength = this.analyser.frequencyBinCount;
+                this.volumeData = new Uint8Array(bufferLength);
+                
+                // Apply state configuration if available
+                if (this.stateManager?.state.audioConfig) {
+                    this.applyStateConfig();
+                }
+                
+                this.isInitialized = true;
+                
+                // Log success if debug mode is enabled
+                if (this.debugMode) {
+                    console.log('AudioManager: Audio context and analyzer initialized');
+                }
             }
             
             return true;
@@ -123,12 +128,8 @@ class AudioManager {
         this.sensitivity = config.sensitivity || 1.5;
         this.triggerCooldown = config.triggerCooldown || 300;
         
-        // Start or stop listening based on state
-        if (config.enabled && !this.isListening) {
-            this.startListening();
-        } else if (!config.enabled && this.isListening) {
-            this.stopListening();
-        }
+        // Don't automatically start listening based on saved state
+        // This ensures we only listen when the user explicitly clicks enable
         
         // Log if debug mode is enabled
         if (this.debugMode) {
@@ -152,18 +153,20 @@ class AudioManager {
                 console.log('AudioManager: Requesting microphone access...');
             }
             
-            // Request microphone access
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: false
-                }
-            });
+            // Request microphone access if not already granted
+            if (!this.mediaStream) {
+                this.mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: false
+                    }
+                });
+            }
             
             // Log microphone track details if in debug mode
             if (this.debugMode) {
-                const audioTracks = stream.getAudioTracks();
+                const audioTracks = this.mediaStream.getAudioTracks();
                 console.log(`AudioManager: Got ${audioTracks.length} audio tracks`);
                 audioTracks.forEach((track, i) => {
                     console.log(`AudioManager: Track ${i}: ${track.label}, enabled: ${track.enabled}`);
@@ -172,7 +175,7 @@ class AudioManager {
             }
             
             // Create microphone source
-            this.microphone = this.audioContext.createMediaStreamSource(stream);
+            this.microphone = this.audioContext.createMediaStreamSource(this.mediaStream);
             
             // Connect microphone to analyzer
             this.microphone.connect(this.analyser);
@@ -240,6 +243,10 @@ class AudioManager {
             this.microphone.disconnect();
             this.microphone = null;
         }
+        
+        // Note: We intentionally don't stop the mediaStream tracks
+        // This prevents the browser from repeatedly asking for permission
+        // The stream will remain active for future use
         
         this.isListening = false;
         
@@ -353,6 +360,20 @@ class AudioManager {
         
         // Check if current volume exceeds threshold
         if (this.currentVolume >= this.volumeThreshold) {
+            // Enhanced debug info
+            const debugInfo = {
+                timestamp: now,
+                volume: this.currentVolume,
+                threshold: this.volumeThreshold,
+                timeSinceLastTrigger: now - this.lastTriggerTime,
+                audioContextState: this.audioContext ? this.audioContext.state : 'none',
+                peakVolumes: [...this.volumeData].sort((a, b) => b - a).slice(0, 5),
+                activeEventListeners: Object.keys(this.eventCallbacks).reduce((acc, key) => {
+                    acc[key] = this.eventCallbacks[key].length;
+                    return acc;
+                }, {})
+            };
+            
             // Trigger volume event
             this.triggerEvent('volumeThreshold', {
                 volume: this.currentVolume,
@@ -365,8 +386,12 @@ class AudioManager {
             
             // Log if debug mode is enabled
             if (this.debugMode) {
-                console.log(`AudioManager: Volume threshold crossed! Volume: ${this.currentVolume.toFixed(1)}`);
+                console.log(`AudioManager: Volume threshold crossed! Volume: ${this.currentVolume.toFixed(1)}`, debugInfo);
             }
+        } else if (this.debugMode && this.currentVolume > this.volumeThreshold * 0.8 && now % 1000 < 50) {
+            // Log near-threshold events occasionally (when volume is at least 80% of threshold)
+            // We mod with 1000 and check < 50 to only log approximately once per second
+            console.log(`AudioManager: Volume near threshold - Current: ${this.currentVolume.toFixed(1)}, Threshold: ${this.volumeThreshold}`);
         }
     }
     
@@ -382,9 +407,18 @@ class AudioManager {
         
         this.eventCallbacks[eventType].push(callback);
         
+        // Enhanced debug logging
+        const callbackInfo = callback.name || 'anonymous';
+        const callbackSource = callback.toString().slice(0, 100) + '...';
+        
         // Log if debug mode is enabled
         if (this.debugMode) {
-            console.log(`AudioManager: Registered callback for '${eventType}' event`);
+            console.log(`AudioManager: Registered callback for '${eventType}' event`, {
+                callbackName: callbackInfo,
+                totalListeners: this.eventCallbacks[eventType].length,
+                callbackPreview: callbackSource,
+                registeredAt: new Date().toISOString()
+            });
         }
     }
     
@@ -413,14 +447,42 @@ class AudioManager {
     triggerEvent(eventType, data) {
         if (!this.eventCallbacks[eventType]) return;
         
+        // Track which callbacks were successful
+        const results = [];
+        
         // Call all callbacks with the event data
-        this.eventCallbacks[eventType].forEach(callback => {
+        this.eventCallbacks[eventType].forEach((callback, index) => {
             try {
+                const startTime = performance.now();
                 callback(data);
+                const executionTime = performance.now() - startTime;
+                
+                results.push({
+                    index,
+                    success: true,
+                    executionTime: executionTime.toFixed(2) + 'ms',
+                    callbackName: callback.name || 'anonymous'
+                });
             } catch (error) {
                 console.error(`AudioManager: Error in '${eventType}' event callback`, error);
+                
+                results.push({
+                    index,
+                    success: false,
+                    error: error.message,
+                    callbackName: callback.name || 'anonymous'
+                });
             }
         });
+        
+        // Log detailed event information if debug mode is enabled
+        if (this.debugMode) {
+            console.log(`AudioManager: Triggered '${eventType}' event with ${this.eventCallbacks[eventType].length} listeners`, {
+                eventData: data,
+                results,
+                triggeredAt: new Date().toISOString()
+            });
+        }
     }
     
     /**
@@ -564,12 +626,44 @@ class AudioManager {
         }
         
         // If audio config changed, apply the new configuration
+        // but don't automatically start listening from state changes
         if (configChanged) {
-            this.applyStateConfig();
+            // Apply configuration values only
+            if (newState.audioConfig) {
+                this.volumeThreshold = newState.audioConfig.volumeThreshold || 50;
+                this.sensitivity = newState.audioConfig.sensitivity || 1.5;
+                this.triggerCooldown = newState.audioConfig.triggerCooldown || 300;
+            }
             
             if (this.debugMode) {
                 console.log('AudioManager: Updated from state change');
             }
+        }
+    }
+    
+    /**
+     * Clean up resources when the application closes
+     * Should be called when the app is closing or on page unload
+     */
+    cleanup() {
+        // Stop listening if active
+        if (this.isListening) {
+            this.stopListening();
+        }
+        
+        // Properly close the media stream if it exists
+        if (this.mediaStream) {
+            this.mediaStream.getTracks().forEach(track => track.stop());
+            this.mediaStream = null;
+        }
+        
+        // Close audio context if it exists
+        if (this.audioContext && this.audioContext.state !== 'closed') {
+            this.audioContext.close();
+        }
+        
+        if (this.debugMode) {
+            console.log('AudioManager: Resources cleaned up');
         }
     }
 }

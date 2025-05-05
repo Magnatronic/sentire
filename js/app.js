@@ -50,25 +50,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Audio Manager for sound detection
     const audioManager = new AudioManager(stateManager);
     
-    // Initialize the audio system
-    audioManager.init().then(initialized => {
-        if (initialized) {
-            console.log('Audio system initialized successfully');
-        } else {
-            console.warn('Audio system initialization failed');
-        }
-        
-        // Initialize Audio Debug Panel if enabled by feature flag
-        let audioDebugPanel;
-        if (ENABLE_AUDIO_DEBUG_PANEL) {
-            audioDebugPanel = new AudioDebugPanel(stateManager, audioManager);
-        }
-        
-        // Add audioDebugPanel to the global object only if enabled
-        if (ENABLE_AUDIO_DEBUG_PANEL && audioDebugPanel) {
-            window.sentireApp.audioDebugPanel = audioDebugPanel;
-        }
-    });
+    // Do not automatically initialize the audio system
+    // This prevents the microphone permission popup from appearing on page load
+    // Instead, wait for the user to click "Enable" in the Audio Debug Panel
     
     // Make key components available globally for debugging and for sketch.js
     window.sentireApp = {
@@ -85,10 +69,32 @@ document.addEventListener('DOMContentLoaded', () => {
         window.sentireApp.debugPanel = debugPanel;
     }
     
+    // Initialize Audio Debug Panel if enabled by feature flag
+    let audioDebugPanel;
+    if (ENABLE_AUDIO_DEBUG_PANEL) {
+        audioDebugPanel = new AudioDebugPanel(stateManager, audioManager);
+        // Add audioDebugPanel to the global object
+        window.sentireApp.audioDebugPanel = audioDebugPanel;
+    }
+    
     // Auto-save state when user leaves the page
     window.addEventListener('beforeunload', () => {
         stateStorage.saveState();
+        
+        // Clean up audio resources
+        if (audioManager) {
+            audioManager.cleanup();
+        }
     });
     
     console.log('State management system initialized');
+    
+    // Ensure the animation starts by explicitly calling to start the current theme
+    // This is needed in case the p5.js sketch runs before our state system is fully initialized
+    setTimeout(() => {
+        if (stateManager.state.isRunning && themeManager.currentTheme) {
+            themeManager.startCurrentTheme();
+            console.log('Animation manually started based on state.isRunning = true');
+        }
+    }, 500);
 });
