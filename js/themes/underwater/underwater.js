@@ -270,27 +270,41 @@ class Fish {
  * Small floating particles that add depth to the scene
  */
 class Plankton {
-    constructor(canvas) {
+    constructor(canvas, depthLevel = null) {
         this.canvas = canvas;
         
         // Random position throughout the canvas
         this.x = this.canvas.random(0, this.canvas.width);
         this.y = this.canvas.random(0, this.canvas.height);
         
-        // Size and opacity properties
-        this.size = this.canvas.random(1, 3);
-        this.opacity = this.canvas.random(100, 200);
+        // Depth simulation (0 = closest, 1 = furthest away)
+        this.depth = depthLevel !== null ? depthLevel : this.canvas.random(0, 1);
         
-        // Movement properties
-        this.xSpeed = this.canvas.random(-0.2, 0.2);
-        this.ySpeed = this.canvas.random(-0.1, 0.1);
+        // Size properties with base size for consistent multiplier application
+        this.baseSize = this.canvas.map(this.depth, 0, 1, 3, 0.5);
+        this.sizeMultiplier = 1;
+        this.size = this.baseSize * this.sizeMultiplier;
         
-        // Color properties (slight variations of green/white)
+        this.opacity = this.canvas.map(this.depth, 0, 1, 220, 80);
+        
+        // Movement properties - deeper plankton move slower
+        const speedFactor = this.canvas.map(this.depth, 0, 1, 1, 0.3);
+        this.xSpeed = this.canvas.random(-0.3, 0.3) * speedFactor;
+        this.ySpeed = this.canvas.random(-0.2, 0.2) * speedFactor;
+        
+        // Color properties vary with depth
+        const colorBrightness = this.canvas.map(this.depth, 0, 1, 1, 0.7);
         this.color = {
-            r: this.canvas.random(180, 230),
-            g: this.canvas.random(230, 255),
-            b: this.canvas.random(180, 230)
+            r: this.canvas.random(180, 230) * colorBrightness,
+            g: this.canvas.random(230, 255) * colorBrightness,
+            b: this.canvas.random(180, 230) * colorBrightness
         };
+    }
+    
+    // Set the size multiplier to adjust plankton size
+    setSizeMultiplier(multiplier) {
+        this.sizeMultiplier = multiplier;
+        this.size = this.baseSize * this.sizeMultiplier;
     }
     
     update() {
@@ -298,9 +312,10 @@ class Plankton {
         this.x += this.xSpeed;
         this.y += this.ySpeed;
         
-        // Add slight random movement
-        this.x += this.canvas.random(-0.1, 0.1);
-        this.y += this.canvas.random(-0.1, 0.1);
+        // Add slight random movement - varies by depth
+        const randomFactor = this.canvas.map(this.depth, 0, 1, 1, 0.4);
+        this.x += this.canvas.random(-0.2, 0.2) * randomFactor;
+        this.y += this.canvas.random(-0.2, 0.2) * randomFactor;
         
         // Wrap around edges
         if (this.x < 0) this.x = this.canvas.width;
@@ -312,7 +327,54 @@ class Plankton {
     draw() {
         this.canvas.noStroke();
         this.canvas.fill(this.color.r, this.color.g, this.color.b, this.opacity);
-        this.canvas.ellipse(this.x, this.y, this.size);
+        
+        // Draw as small blurry dots for deeper plankton, sharper for closer ones
+        if (this.depth > 0.7) {
+            // Far away plankton - just a dot
+            this.canvas.ellipse(this.x, this.y, this.size);
+        } else {
+            // Closer plankton - slightly more detailed
+            this.canvas.push();
+            this.canvas.translate(this.x, this.y);
+            
+            // Main body
+            this.canvas.ellipse(0, 0, this.size);
+            
+            // Add simple details for closer plankton
+            if (this.depth < 0.3) {
+                const detailSize = this.size * 0.6;
+                const angle = this.canvas.frameCount * 0.01 + this.depth * 10;
+                const xOffset = Math.cos(angle) * this.size * 0.3;
+                const yOffset = Math.sin(angle) * this.size * 0.3;
+                this.canvas.fill(this.color.r * 1.1, this.color.g * 1.1, this.color.b * 1.1, this.opacity * 0.7);
+                this.canvas.ellipse(xOffset, yOffset, detailSize);
+            }
+            
+            this.canvas.pop();
+        }
+    }
+    
+    setDepth(depth) {
+        this.depth = depth;
+        // Update base size based on new depth
+        this.baseSize = this.canvas.map(this.depth, 0, 1, 3, 0.5);
+        // Apply the current size multiplier to maintain consistency
+        this.size = this.baseSize * this.sizeMultiplier;
+        
+        this.opacity = this.canvas.map(this.depth, 0, 1, 220, 80);
+        
+        // Update speed based on depth
+        const speedFactor = this.canvas.map(this.depth, 0, 1, 1, 0.3);
+        this.xSpeed = this.canvas.random(-0.3, 0.3) * speedFactor;
+        this.ySpeed = this.canvas.random(-0.2, 0.2) * speedFactor;
+        
+        // Update color based on depth
+        const colorBrightness = this.canvas.map(this.depth, 0, 1, 1, 0.7);
+        this.color = {
+            r: this.canvas.random(180, 230) * colorBrightness,
+            g: this.canvas.random(230, 255) * colorBrightness,
+            b: this.canvas.random(180, 230) * colorBrightness
+        };
     }
 }
 
@@ -337,6 +399,8 @@ class UnderwaterTheme extends Theme {
         this.wobbleIntensity = 0.5; // Default wobble intensity
         this.currentStrength = 0; // Default current strength
         this.currentDirection = 0; // Default current direction (degrees)
+        this.planktonSizeMultiplier = 1; // Default plankton size multiplier
+        this.planktonDepthVariation = 0.5; // Default depth variation (0-1)
         
         // Default colors
         this.bubbleColor = { r: 220, g: 240, b: 255 }; // Light blue
@@ -405,7 +469,9 @@ class UnderwaterTheme extends Theme {
                         fishSpeed: 1,     // 0.5-3 scale
                         wobbleIntensity: 5, // 0-10 scale
                         currentStrength: 0, // 0-10 scale
-                        currentDirection: 0 // 0-360 degrees
+                        currentDirection: 0, // 0-360 degrees
+                        planktonSize: 10, // 1-20 scale
+                        planktonDepth: 5  // 0-10 scale (depth variation)
                     }
                 }
             }, 'UnderwaterTheme.constructor');
@@ -440,6 +506,17 @@ class UnderwaterTheme extends Theme {
         
         // Set current properties
         this.setCurrent(config.currentStrength, config.currentDirection);
+        
+        // Set plankton properties if they exist
+        if (config.planktonSize !== undefined) {
+            const planktonSizeMultiplier = config.planktonSize / 10;
+            this.setPlanktonSizeMultiplier(planktonSizeMultiplier);
+        }
+        
+        if (config.planktonDepth !== undefined) {
+            const planktonDepthVariation = config.planktonDepth / 10;
+            this.setPlanktonDepthVariation(planktonDepthVariation);
+        }
         
         // Set running state
         if (this.stateManager.state.isRunning) {
@@ -573,6 +650,42 @@ class UnderwaterTheme extends Theme {
         this.backgroundColor = { r, g, b };
     }
 
+    setPlanktonSizeMultiplier(multiplier) {
+        this.planktonSizeMultiplier = multiplier;
+        // Update existing plankton sizes using the proper method
+        for (let plankton of this.planktons) {
+            plankton.setSizeMultiplier(multiplier);
+        }
+    }
+    
+    setPlanktonDepthVariation(variation) {
+        this.planktonDepthVariation = variation;
+        
+        // Redistribute plankton depths based on variation
+        const previouslyRunning = this.isRunning;
+        
+        // Stop animation temporarily if running
+        if (previouslyRunning) {
+            this.isRunning = false;
+        }
+        
+        // Redistribute plankton depths
+        for (let plankton of this.planktons) {
+            // If variation is 0, all plankton are at middle depth (0.5)
+            // If variation is 1, full range of depths is used
+            const minDepth = 0.5 - (0.5 * variation);
+            const maxDepth = 0.5 + (0.5 * variation);
+            
+            const newDepth = this.canvas.random(minDepth, maxDepth);
+            plankton.setDepth(newDepth);
+        }
+        
+        // Resume animation if it was running before
+        if (previouslyRunning) {
+            this.isRunning = true;
+        }
+    }
+
     updateBubbles() {
         // Adjust number of bubbles
         if (this.bubbles.length < this.numBubbles) {
@@ -614,7 +727,14 @@ class UnderwaterTheme extends Theme {
             // Add more planktons
             const numToAdd = this.numPlanktons - this.planktons.length;
             for (let i = 0; i < numToAdd; i++) {
-                const plankton = new Plankton(this.canvas);
+                // Create new plankton with proper depth variation and size multiplier
+                const minDepth = 0.5 - (0.5 * this.planktonDepthVariation);
+                const maxDepth = 0.5 + (0.5 * this.planktonDepthVariation);
+                const depthLevel = this.canvas.random(minDepth, maxDepth);
+                
+                const plankton = new Plankton(this.canvas, depthLevel);
+                plankton.setSizeMultiplier(this.planktonSizeMultiplier);
+                
                 this.planktons.push(plankton);
             }
         } else if (this.planktons.length > this.numPlanktons) {
@@ -643,10 +763,17 @@ class UnderwaterTheme extends Theme {
             this.fishes.push(fish);
         }
 
-        // Create planktons
+        // Create planktons with proper depth variation and size multiplier
         this.planktons = [];
         for (let i = 0; i < this.numPlanktons; i++) {
-            const plankton = new Plankton(this.canvas);
+            // Create plankton with proper depth variation
+            const minDepth = 0.5 - (0.5 * this.planktonDepthVariation);
+            const maxDepth = 0.5 + (0.5 * this.planktonDepthVariation);
+            const depthLevel = this.canvas.random(minDepth, maxDepth);
+            
+            const plankton = new Plankton(this.canvas, depthLevel);
+            plankton.setSizeMultiplier(this.planktonSizeMultiplier);
+            
             this.planktons.push(plankton);
         }
     }
@@ -696,18 +823,28 @@ class UnderwaterTheme extends Theme {
     }
     
     drawUnderwaterGradient() {
-        // Create a subtle gradient effect from bottom to top
-        const numLayers = 20;
-        const layerHeight = this.canvas.height / numLayers;
+        // Use the HTML Canvas API for a smooth gradient with no banding
+        const ctx = this.canvas.drawingContext;
         
-        for (let i = 0; i < numLayers; i++) {
-            const y = i * layerHeight;
-            const alpha = this.canvas.map(i, 0, numLayers, 100, 0);
-            
-            this.canvas.noStroke();
-            this.canvas.fill(0, 0, 30, alpha);
-            this.canvas.rect(0, y, this.canvas.width, layerHeight);
-        }
+        // Create a linear gradient from bottom to top
+        const gradient = ctx.createLinearGradient(0, this.canvas.height, 0, 0);
+        
+        // Define gradient color stops
+        const baseColor = this.backgroundColor;
+        const deepColor = {
+            r: Math.max(0, baseColor.r - 20), 
+            g: Math.max(0, baseColor.g - 20), 
+            b: Math.max(0, baseColor.b)
+        };
+        
+        // Add multiple color stops for smoother transition
+        gradient.addColorStop(0, `rgb(${deepColor.r}, ${deepColor.g}, ${deepColor.b})`);
+        gradient.addColorStop(0.6, `rgb(${baseColor.r}, ${baseColor.g}, ${baseColor.b})`);
+        gradient.addColorStop(1, `rgb(${Math.min(255, baseColor.r + 15)}, ${Math.min(255, baseColor.g + 15)}, ${Math.min(255, baseColor.b + 20)})`);
+        
+        // Fill with gradient
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     cleanup() {
