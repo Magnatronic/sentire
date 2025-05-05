@@ -227,22 +227,50 @@ class SidebarAudioPanel {
                 ctx.lineTo(width, thresholdY);
                 ctx.stroke();
                 
-                // Draw current volume indicator on the right side
+                // Draw current (raw) volume indicator on the right side
+                const rawVolumeHeight = (this.audioManager.currentVolume / 100) * height;
+                ctx.fillStyle = this.audioManager.currentVolume >= this.audioManager.volumeThreshold 
+                    ? 'rgba(244, 67, 54, 0.7)' 
+                    : 'rgba(255, 152, 0, 0.7)';
+                ctx.fillRect(width - 28, height - rawVolumeHeight, 12, rawVolumeHeight);
+                
+                // Draw smoothed volume indicator (used for visualization)
                 const volumeHeight = (this.audioManager.smoothedVolume / 100) * height;
                 ctx.fillStyle = this.audioManager.smoothedVolume >= this.audioManager.volumeThreshold 
                     ? 'rgba(244, 67, 54, 0.7)' 
                     : 'rgba(76, 175, 80, 0.7)';
                 ctx.fillRect(width - 15, height - volumeHeight, 12, volumeHeight);
                 
-                // Add volume value
+                // Add volume values
                 ctx.fillStyle = '#fff';
                 ctx.font = '10px Arial';
                 ctx.textAlign = 'right';
+                
+                // Display raw volume (what triggers events)
                 ctx.fillText(
-                    this.audioManager.smoothedVolume.toFixed(1), 
+                    `R: ${this.audioManager.currentVolume.toFixed(1)}`, 
+                    width - 20, 
+                    height - 20
+                );
+                
+                // Display smoothed volume (what's visualized)
+                ctx.fillText(
+                    `S: ${this.audioManager.smoothedVolume.toFixed(1)}`, 
                     width - 20, 
                     height - 5
                 );
+                
+                // Add legend for the raw vs smoothed bars
+                ctx.fillStyle = 'rgba(255, 152, 0, 0.7)';
+                ctx.fillRect(5, 5, 12, 12);
+                ctx.fillStyle = '#fff';
+                ctx.textAlign = 'left';
+                ctx.fillText('Raw (trigger)', 22, 15);
+                
+                ctx.fillStyle = 'rgba(76, 175, 80, 0.7)';
+                ctx.fillRect(5, 22, 12, 12);
+                ctx.fillStyle = '#fff';
+                ctx.fillText('Smoothed (display)', 22, 32);
             } else {
                 // Show message if audio isn't initialized
                 ctx.fillStyle = '#888';
