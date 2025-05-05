@@ -212,6 +212,23 @@ slider::-moz-range-thumb {
     .main-content {
         height: 50vh;
     }
+    
+    /* Auto-collapse panels on smaller screens */
+    .audio-controls:not(:focus-within),
+    .display-settings:not(:focus-within) {
+        max-height: 50px;
+    }
+    
+    .audio-controls:not(:focus-within) .audio-controls-content,
+    .display-settings:not(:focus-within) .display-settings-content {
+        max-height: 0;
+        opacity: 0;
+    }
+    
+    .audio-controls:not(:focus-within) h3::after,
+    .display-settings:not(:focus-within) h3::after {
+        transform: rotate(-90deg);
+    }
 }
 
 /* Color picker styles */
@@ -268,6 +285,83 @@ input[type="color"]::-webkit-color-swatch {
     color: #ffffff;
     border-bottom: 1px solid #444;
     padding-bottom: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.audio-controls h3::after {
+    content: "▼";
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.audio-controls.collapsed h3::after {
+    transform: rotate(-90deg);
+}
+
+.audio-controls-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    max-height: 500px;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.audio-controls.collapsed .audio-controls-content {
+    max-height: 0;
+    opacity: 0;
+}
+
+/* Display Settings Panel */
+.display-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: rgba(40, 40, 50, 0.5);
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.display-settings h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #ffffff;
+    border-bottom: 1px solid #444;
+    padding-bottom: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.display-settings h3::after {
+    content: "▼";
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.display-settings.collapsed h3::after {
+    transform: rotate(-90deg);
+}
+
+.display-settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    max-height: 1000px;
+    opacity: 1;
+    overflow: hidden;
+}
+
+.display-settings.collapsed .display-settings-content {
+    max-height: 0;
+    opacity: 0;
 }
 
 .audio-toggle {
