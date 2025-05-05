@@ -2,7 +2,7 @@
  * Bubble class for underwater theme
  */
 class Bubble {
-    constructor(canvas, initialDistribution = false, sizeMultiplier = 1) {
+    constructor(canvas, initialDistribution = false, sizeMultiplier = 1, depthLevel = null) {
         this.canvas = canvas;
         this.x = this.canvas.random(0, this.canvas.width);
         
@@ -13,34 +13,59 @@ class Bubble {
             this.y = this.canvas.random(this.canvas.height, this.canvas.height + 50);
         }
         
-        // Base size affected by the size multiplier parameter
-        this.baseSize = this.canvas.random(5, 15);
+        // Depth simulation (0 = closest, 1 = furthest away)
+        this.depth = depthLevel !== null ? depthLevel : this.canvas.random(0, 1);
+        
+        // Base size affected by the size multiplier parameter and depth
+        this.baseSize = this.canvas.random(5, 15) * this.canvas.map(this.depth, 0, 1, 1, 0.5);
         this.size = this.baseSize * sizeMultiplier;
         
-        // Store base speed for later adjustments
-        this.baseSpeed = this.canvas.map(this.baseSize, 5, 15, 2, 1);
+        // Store base speed for later adjustments - deeper bubbles move slower
+        this.baseSpeed = this.canvas.map(this.baseSize, 5, 15, 2, 1) * this.canvas.map(this.depth, 0, 1, 1, 0.6);
         this.speedMultiplier = 1;
         this.speed = this.baseSpeed * this.speedMultiplier;
         
-        this.opacity = this.canvas.map(this.baseSize, 5, 15, 150, 200);
+        // Opacity varies by depth - further bubbles are more transparent
+        this.opacity = this.canvas.map(this.baseSize, 5, 15, 150, 200) * this.canvas.map(this.depth, 0, 1, 1, 0.7);
         
-        // Wobble properties with base randomness
-        this.baseWobbleAmount = this.canvas.random(0.3, 1.0);
+        // Wobble properties with base randomness - deeper bubbles wobble less
+        this.baseWobbleAmount = this.canvas.random(0.3, 1.0) * this.canvas.map(this.depth, 0, 1, 1, 0.6);
         this.wobbleIntensity = 1.0; // Default multiplier
         this.wobble = this.canvas.random(0, this.canvas.TWO_PI); // Random starting phase
-        this.baseWobbleSpeed = this.canvas.random(0.01, 0.05);
+        this.baseWobbleSpeed = this.canvas.random(0.01, 0.05) * this.canvas.map(this.depth, 0, 1, 1, 0.8);
         this.wobbleSpeed = this.baseWobbleSpeed;
         
-        // Current properties
+        // Current properties - deeper bubbles less affected
         this.currentStrength = 0;
         this.currentDirection = 0; // Degrees (0 is right, 90 is up)
+        this.currentDepthFactor = this.canvas.map(this.depth, 0, 1, 1, 0.3);
         
-        // Default bubble color (white with blue tint)
-        this.color = { r: 220, g: 240, b: 255 };
-        this.strokeColor = { r: 150, g: 200, b: 255 };
+        // Default bubble color (white with blue tint) - adjust saturation based on depth
+        const depthColorFactor = this.canvas.map(this.depth, 0, 1, 1, 0.85);
+        this.color = { 
+            r: 220 * depthColorFactor, 
+            g: 240 * depthColorFactor, 
+            b: 255 * depthColorFactor 
+        };
+        this.strokeColor = { 
+            r: 150 * depthColorFactor, 
+            g: 200 * depthColorFactor, 
+            b: 255 * depthColorFactor 
+        };
         
-        // Shine effect
+        // New properties for enhanced realism
+        this.rotationAngle = this.canvas.random(0, this.canvas.TWO_PI);
+        this.rotationSpeed = this.canvas.random(-0.01, 0.01) * this.canvas.map(this.depth, 0, 1, 1, 0.7);
+        
+        // Variable shine effect properties - deeper bubbles have subtler shine
         this.shineAngle = this.canvas.random(0, this.canvas.TWO_PI);
+        this.shineSize = this.canvas.random(0.2, 0.35) * this.canvas.map(this.depth, 0, 1, 1, 0.7);
+        this.shineBrightness = this.canvas.random(0.5, 0.7) * this.canvas.map(this.depth, 0, 1, 1, 0.6);
+        
+        // Acceleration properties - deeper bubbles accelerate less
+        this.acceleration = 0;
+        this.maxAcceleration = 0.03 * this.canvas.map(this.depth, 0, 1, 1, 0.5);
+        this.currentAcceleration = 0;
     }
 
     // Set the speed multiplier to adjust rising speed
@@ -60,26 +85,63 @@ class Bubble {
         this.wobbleSpeed = this.baseWobbleSpeed * (intensity * 2 + 0.3);
     }
     
-    // Set current properties
+    // Set current properties - apply depth factor to current effect
     setCurrent(strength, direction) {
-        this.currentStrength = strength;
+        this.currentStrength = strength * this.currentDepthFactor;
         this.currentDirection = direction;
     }
     
     // Set the bubble color
     setColor(r, g, b) {
-        this.color = { r, g, b };
+        // Apply depth-based color adjustment
+        const depthColorFactor = this.canvas.map(this.depth, 0, 1, 1, 0.85);
+        this.color = { 
+            r: r * depthColorFactor, 
+            g: g * depthColorFactor, 
+            b: b * depthColorFactor 
+        };
+        
         // Set stroke color slightly darker
         this.strokeColor = { 
-            r: Math.max(r - 70, 0), 
-            g: Math.max(g - 40, 0), 
-            b: Math.max(b - 0, 0) 
+            r: Math.max(r * depthColorFactor - 70, 0), 
+            g: Math.max(g * depthColorFactor - 40, 0), 
+            b: Math.max(b * depthColorFactor - 0, 0) 
+        };
+        
+        // Calculate color brightness (0-255)
+        const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+        
+        // For darker colors, create more noticeably tinted highlights
+        // For lighter colors, keep highlights brighter
+        const colorInfluence = this.canvas.map(brightness, 0, 255, 0.5, 0.2);
+        
+        // Create highlight colors that are tinted by the bubble color
+        this.highlightColor = {
+            r: Math.min(255, r * colorInfluence + 255 * (1 - colorInfluence)),
+            g: Math.min(255, g * colorInfluence + 255 * (1 - colorInfluence)),
+            b: Math.min(255, b * colorInfluence + 255 * (1 - colorInfluence))
+        };
+        
+        // Secondary highlight has a stronger color influence
+        const secondaryColorInfluence = this.canvas.map(brightness, 0, 255, 0.7, 0.3);
+        this.secondaryHighlightColor = {
+            r: Math.min(255, r * secondaryColorInfluence + 255 * (1 - secondaryColorInfluence)),
+            g: Math.min(255, g * secondaryColorInfluence + 255 * (1 - secondaryColorInfluence)),
+            b: Math.min(255, b * secondaryColorInfluence + 255 * (1 - secondaryColorInfluence))
         };
     }
 
     update() {
-        // Base vertical movement - rising (negative y is up)
-        this.y -= this.speed;
+        // Calculate acceleration based on depth - bubbles accelerate as they rise
+        const depthFactor = Math.max(0, Math.min(1, this.y / this.canvas.height));
+        this.acceleration = this.maxAcceleration * (1 - depthFactor);
+        this.currentAcceleration = Math.min(this.currentAcceleration + this.acceleration, this.speed * 0.5);
+        
+        // Base vertical movement - rising (negative y is up) with acceleration
+        this.y -= (this.speed + this.currentAcceleration);
+        
+        // Update rotation
+        this.rotationAngle += this.rotationSpeed;
         
         // Apply wobble effect (side-to-side movement)
         const wobbleAmount = this.baseWobbleAmount * this.wobbleIntensity;
@@ -116,20 +178,70 @@ class Bubble {
     draw() {
         this.canvas.push();
         this.canvas.translate(this.x, this.y);
+        this.canvas.rotate(this.rotationAngle); // Apply rotation
         
-        // Draw bubble
-        this.canvas.strokeWeight(1);
-        this.canvas.stroke(this.strokeColor.r, this.strokeColor.g, this.strokeColor.b, this.opacity);
-        this.canvas.fill(this.color.r, this.color.g, this.color.b, this.opacity * 0.7);
-        this.canvas.ellipse(0, 0, this.size);
+        // Create a subtle gradient for more realistic bubble appearance
+        const gradientSteps = 3;
+        for (let i = 0; i < gradientSteps; i++) {
+            const ratio = i / (gradientSteps - 1);
+            const radius = this.size * (1 - ratio * 0.15);
+            const alpha = this.opacity * (0.7 - ratio * 0.5);
+            
+            // Draw bubble fill with gradient effect
+            this.canvas.noStroke();
+            this.canvas.fill(
+                this.color.r, 
+                this.color.g, 
+                this.color.b, 
+                alpha
+            );
+            this.canvas.ellipse(0, 0, radius, radius);
+        }
         
-        // Draw shine highlight
+        // Edge detail varies by depth - closer bubbles have sharper edges
+        const edgeWeight = this.canvas.map(this.depth, 0, 1, 1, 0.5);
+        
+        // Draw bubble edge
+        this.canvas.noFill();
+        this.canvas.strokeWeight(edgeWeight);
+        this.canvas.stroke(
+            this.strokeColor.r,
+            this.strokeColor.g,
+            this.strokeColor.b,
+            this.opacity * 0.9
+        );
+        this.canvas.ellipse(0, 0, this.size, this.size);
+        
+        // Draw highlights - closer bubbles have more pronounced highlights
         this.canvas.noStroke();
-        this.canvas.fill(255, 255, 255, this.opacity * 0.6);
-        this.canvas.push();
-        this.canvas.rotate(this.shineAngle);
-        this.canvas.ellipse(this.size * 0.2, -this.size * 0.2, this.size * 0.3, this.size * 0.2);
-        this.canvas.pop();
+        
+        // Draw variable-sized main highlight using the color-tinted highlight color
+        const shineSize = this.size * this.shineSize;
+        const shineX = this.size * 0.2;
+        const shineY = -this.size * 0.2;
+        
+        this.canvas.fill(
+            this.highlightColor.r,
+            this.highlightColor.g,
+            this.highlightColor.b,
+            this.opacity * this.shineBrightness
+        );
+        this.canvas.ellipse(shineX, shineY, shineSize, shineSize * 0.7);
+        
+        // Add a smaller secondary highlight for realism (only visible on closer bubbles)
+        if (this.depth < 0.7) {
+            const secondaryShineSize = this.size * 0.12 * this.canvas.map(this.depth, 0, 0.7, 1, 0);
+            const secondaryShineX = -this.size * 0.25;
+            const secondaryShineY = this.size * 0.15;
+            
+            this.canvas.fill(
+                this.secondaryHighlightColor.r,
+                this.secondaryHighlightColor.g,
+                this.secondaryHighlightColor.b,
+                this.opacity * 0.4 * this.canvas.map(this.depth, 0, 0.7, 1, 0)
+            );
+            this.canvas.ellipse(secondaryShineX, secondaryShineY, secondaryShineSize);
+        }
         
         this.canvas.pop();
     }
@@ -137,7 +249,22 @@ class Bubble {
     resetPosition() {
         this.x = this.canvas.random(0, this.canvas.width);
         this.y = this.canvas.random(this.canvas.height, this.canvas.height + 50);
+        
+        // Reset acceleration
+        this.currentAcceleration = 0;
+        
+        // Randomize shine properties for variety
         this.shineAngle = this.canvas.random(0, this.canvas.TWO_PI);
+        this.shineSize = this.canvas.random(0.2, 0.35) * this.canvas.map(this.depth, 0, 1, 1, 0.7);
+        this.shineBrightness = this.canvas.random(0.5, 0.7) * this.canvas.map(this.depth, 0, 1, 1, 0.6);
+        
+        // Randomize rotation
+        this.rotationSpeed = this.canvas.random(-0.01, 0.01) * this.canvas.map(this.depth, 0, 1, 1, 0.7);
+    }
+    
+    // Getter for calculating z-index based on depth (for sorting)
+    getZIndex() {
+        return this.depth;
     }
 }
 
@@ -692,7 +819,8 @@ class UnderwaterTheme extends Theme {
             // Add more bubbles
             const numToAdd = this.numBubbles - this.bubbles.length;
             for (let i = 0; i < numToAdd; i++) {
-                const bubble = new Bubble(this.canvas, true, this.bubbleSizeMultiplier);
+                const depthLevel = this.canvas.random(0, 1); // Assign random depth level for 3D effect
+                const bubble = new Bubble(this.canvas, true, this.bubbleSizeMultiplier, depthLevel);
                 bubble.setSpeedMultiplier(this.bubbleSpeedMultiplier);
                 bubble.setColor(this.bubbleColor.r, this.bubbleColor.g, this.bubbleColor.b);
                 bubble.setWobbleIntensity(this.wobbleIntensity);
@@ -747,7 +875,8 @@ class UnderwaterTheme extends Theme {
         // Create bubbles with initial distribution throughout canvas
         this.bubbles = [];
         for (let i = 0; i < this.numBubbles; i++) {
-            const bubble = new Bubble(this.canvas, true, this.bubbleSizeMultiplier);
+            const depthLevel = this.canvas.random(0, 1); // Assign depth level for 3D effect
+            const bubble = new Bubble(this.canvas, true, this.bubbleSizeMultiplier, depthLevel);
             bubble.setSpeedMultiplier(this.bubbleSpeedMultiplier);
             bubble.setColor(this.bubbleColor.r, this.bubbleColor.g, this.bubbleColor.b);
             bubble.setWobbleIntensity(this.wobbleIntensity);
@@ -806,6 +935,9 @@ class UnderwaterTheme extends Theme {
         // Draw subtle underwater gradient
         this.drawUnderwaterGradient();
         
+        // Sort bubbles by depth (furthest first, closest last)
+        this.bubbles.sort((a, b) => b.getZIndex() - a.getZIndex());
+        
         // Draw all planktons
         for (let plankton of this.planktons) {
             plankton.draw();
@@ -816,7 +948,7 @@ class UnderwaterTheme extends Theme {
             fish.draw();
         }
         
-        // Draw all bubbles (on top of fish)
+        // Draw all bubbles (sorted by depth)
         for (let bubble of this.bubbles) {
             bubble.draw();
         }
