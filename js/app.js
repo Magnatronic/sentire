@@ -7,6 +7,10 @@
 // Set to false before merging to main branch
 const ENABLE_DEBUG_PANEL = true;
 
+// Feature flag to control audio debug panel visibility
+// Set to false before merging to main branch
+const ENABLE_AUDIO_DEBUG_PANEL = true;
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Music Therapy Sensory App initialized');
     
@@ -43,13 +47,37 @@ document.addEventListener('DOMContentLoaded', () => {
         debugPanel.init();
     }
     
+    // Initialize Audio Manager for sound detection
+    const audioManager = new AudioManager(stateManager);
+    
+    // Initialize the audio system
+    audioManager.init().then(initialized => {
+        if (initialized) {
+            console.log('Audio system initialized successfully');
+        } else {
+            console.warn('Audio system initialization failed');
+        }
+        
+        // Initialize Audio Debug Panel if enabled by feature flag
+        let audioDebugPanel;
+        if (ENABLE_AUDIO_DEBUG_PANEL) {
+            audioDebugPanel = new AudioDebugPanel(stateManager, audioManager);
+        }
+        
+        // Add audioDebugPanel to the global object only if enabled
+        if (ENABLE_AUDIO_DEBUG_PANEL && audioDebugPanel) {
+            window.sentireApp.audioDebugPanel = audioDebugPanel;
+        }
+    });
+    
     // Make key components available globally for debugging and for sketch.js
     window.sentireApp = {
         stateManager,
         stateStorage,
         presetManager,
         uiController,
-        themeManager
+        themeManager,
+        audioManager
     };
     
     // Add debugPanel to the global object only if enabled

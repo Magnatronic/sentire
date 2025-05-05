@@ -35,6 +35,15 @@ class StateManager {
                     windDirection: 0
                 }
                 // Additional themes will be added here
+            },
+            
+            // Audio configuration
+            audioConfig: {
+                enabled: false,
+                volumeThreshold: 50,
+                sensitivity: 1.5,
+                showVisualizer: true,
+                triggerCooldown: 300
             }
         };
         
@@ -49,7 +58,8 @@ class StateManager {
             // Specific observers only receive relevant state changes
             appState: [],
             theme: [],
-            themeConfigs: []
+            themeConfigs: [],
+            audio: [] // Add audio observer type
         };
         
         // Store last update timestamp
@@ -150,6 +160,10 @@ class StateManager {
                 // Handle app state changes
                 else if (['isRunning', 'isFullscreen', 'isTransitioning'].includes(key)) {
                     notifyTypes.add('appState');
+                }
+                // Handle audio configuration changes
+                else if (pathString.startsWith('audioConfig')) {
+                    notifyTypes.add('audio');
                 }
                 
                 if (typeof changes[key] === 'object' && changes[key] !== null && !Array.isArray(changes[key]) && 
