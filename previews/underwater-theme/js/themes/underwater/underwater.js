@@ -284,6 +284,10 @@ class Fish {
         this.baseSize = this.canvas.random(20, 40);
         this.size = this.baseSize * sizeMultiplier;
         
+        // Body shape properties for more natural fish forms
+        this.bodyWidthRatio = this.canvas.random(1.4, 1.8);  // Body width/height ratio
+        this.bodyTaperRatio = this.canvas.random(0.6, 0.75); // How much the body tapers toward the tail
+        
         // Movement properties
         this.baseSpeed = this.canvas.map(this.baseSize, 20, 40, 2, 1);
         this.speedMultiplier = 1;
@@ -297,28 +301,63 @@ class Fish {
         this.yWobbleSpeed = this.canvas.random(0.02, 0.05);
         this.yWobbleAmount = this.canvas.random(0.5, 2);
         
-        // Fish colors
+        // Fish colors - now with additional color properties for gradients
         this.generateRandomColors();
         
         // Tail wagging
         this.tailAngle = 0;
         this.tailSpeed = this.canvas.random(0.1, 0.2);
         this.tailAmplitude = this.canvas.random(20, 30);
+        
+        // Body curvature for swimming animation
+        this.bodyCurve = 0;
     }
     
     generateRandomColors() {
-        // Generate a random fish color scheme
+        // Generate a random fish color scheme with primary and secondary colors for gradients
         const colorSchemes = [
-            { body: { r: 255, g: 100, b: 100 }, tail: { r: 255, g: 50, b: 50 } },    // Red
-            { body: { r: 100, g: 150, b: 255 }, tail: { r: 70, g: 130, b: 230 } },    // Blue
-            { body: { r: 255, g: 200, b: 70 }, tail: { r: 255, g: 170, b: 40 } },     // Gold
-            { body: { r: 150, g: 220, b: 150 }, tail: { r: 120, g: 200, b: 120 } },   // Green
-            { body: { r: 200, g: 150, b: 255 }, tail: { r: 180, g: 120, b: 240 } }    // Purple
+            // Red fish
+            { 
+                body: { primary: { r: 255, g: 100, b: 100 }, secondary: { r: 255, g: 150, b: 130 } }, 
+                tail: { primary: { r: 255, g: 50, b: 50 }, secondary: { r: 220, g: 80, b: 70 } },
+                fin: { r: 255, g: 130, b: 120 }
+            },
+            // Blue fish
+            { 
+                body: { primary: { r: 100, g: 150, b: 255 }, secondary: { r: 130, g: 180, b: 255 } }, 
+                tail: { primary: { r: 70, g: 130, b: 230 }, secondary: { r: 100, g: 160, b: 255 } },
+                fin: { r: 120, g: 170, b: 250 }
+            },
+            // Gold fish
+            { 
+                body: { primary: { r: 255, g: 200, b: 70 }, secondary: { r: 255, g: 220, b: 130 } }, 
+                tail: { primary: { r: 255, g: 170, b: 40 }, secondary: { r: 255, g: 190, b: 80 } },
+                fin: { r: 255, g: 215, b: 120 }
+            },
+            // Green fish
+            { 
+                body: { primary: { r: 150, g: 220, b: 150 }, secondary: { r: 180, g: 235, b: 180 } }, 
+                tail: { primary: { r: 120, g: 200, b: 120 }, secondary: { r: 140, g: 210, b: 140 } },
+                fin: { r: 160, g: 225, b: 160 }
+            },
+            // Purple fish
+            { 
+                body: { primary: { r: 200, g: 150, b: 255 }, secondary: { r: 220, g: 180, b: 255 } }, 
+                tail: { primary: { r: 180, g: 120, b: 240 }, secondary: { r: 200, g: 150, b: 250 } },
+                fin: { r: 210, g: 170, b: 250 }
+            },
+            // Teal fish
+            { 
+                body: { primary: { r: 80, g: 200, b: 200 }, secondary: { r: 120, g: 225, b: 215 } }, 
+                tail: { primary: { r: 60, g: 180, b: 180 }, secondary: { r: 100, g: 200, b: 200 } },
+                fin: { r: 90, g: 210, b: 210 }
+            }
         ];
         
         const scheme = colorSchemes[Math.floor(this.canvas.random(0, colorSchemes.length))];
         this.bodyColor = scheme.body;
         this.tailColor = scheme.tail;
+        this.finColor = scheme.fin;
     }
     
     // Set the speed multiplier to adjust swimming speed
@@ -358,6 +397,9 @@ class Fish {
         
         // Update tail wagging
         this.tailAngle = Math.sin(Date.now() * this.tailSpeed * 0.01) * this.tailAmplitude;
+        
+        // Update body curve for swimming motion - subtle S-shape
+        this.bodyCurve = Math.sin(this.yWobble * 0.5) * 4;
     }
     
     draw() {
@@ -369,26 +411,185 @@ class Fish {
             this.canvas.scale(-1, 1);
         }
         
-        // Draw fish body
-        this.canvas.noStroke();
-        this.canvas.fill(this.bodyColor.r, this.bodyColor.g, this.bodyColor.b);
-        this.canvas.ellipse(0, 0, this.size * 1.5, this.size * 0.8);
+        // Draw fish with natural body shape using beginShape/endShape
+        this.drawBodyWithGradient();
         
-        // Draw tail
-        this.canvas.push();
-        this.canvas.fill(this.tailColor.r, this.tailColor.g, this.tailColor.b);
-        this.canvas.translate(-this.size * 0.7, 0);
-        this.canvas.rotate(this.canvas.radians(this.tailAngle));
-        this.canvas.triangle(0, 0, -this.size * 0.8, -this.size * 0.4, -this.size * 0.8, this.size * 0.4);
-        this.canvas.pop();
+        // Draw tail with more natural shape and gradient
+        this.drawTail();
+        
+        // Draw fins
+        this.drawFins();
         
         // Draw eye
-        this.canvas.fill(255);
-        this.canvas.ellipse(this.size * 0.5, -this.size * 0.1, this.size * 0.2, this.size * 0.2);
-        this.canvas.fill(0);
-        this.canvas.ellipse(this.size * 0.55, -this.size * 0.1, this.size * 0.1, this.size * 0.1);
+        this.drawEye();
         
         this.canvas.pop();
+    }
+    
+    drawBodyWithGradient() {
+        // Create a custom gradient fill for the fish body
+        const ctx = this.canvas.drawingContext;
+        const bodyWidth = this.size * this.bodyWidthRatio;
+        const bodyHeight = this.size * 0.8;
+        
+        // Save the current context state
+        ctx.save();
+        
+        // Create body shape path for clipping
+        ctx.beginPath();
+        
+        // Calculate control points for bezier curves to create natural fish shape
+        const taperX = -bodyWidth * 0.3; // Where body starts to taper toward tail
+        const taperWidth = bodyWidth * this.bodyTaperRatio;
+        
+        // Top curve
+        ctx.moveTo(bodyWidth * 0.5, 0); // Front of fish
+        ctx.quadraticCurveTo(
+            bodyWidth * 0.4, -bodyHeight * 0.5, 
+            taperX, -bodyHeight * 0.45
+        );
+        ctx.quadraticCurveTo(
+            -bodyWidth * 0.5, -bodyHeight * 0.3, 
+            -bodyWidth * 0.6, 0
+        );
+        
+        // Bottom curve
+        ctx.quadraticCurveTo(
+            -bodyWidth * 0.5, bodyHeight * 0.3, 
+            taperX, bodyHeight * 0.45
+        );
+        ctx.quadraticCurveTo(
+            bodyWidth * 0.4, bodyHeight * 0.5, 
+            bodyWidth * 0.5, 0
+        );
+        
+        // Apply subtle body curve for swimming motion
+        if (this.bodyCurve !== 0) {
+            // Apply a transform to curve the body slightly
+            ctx.transform(1, 0, Math.sin(this.bodyCurve * 0.01) * 0.1, 1, 0, 0);
+        }
+        
+        ctx.closePath();
+        ctx.clip(); // Use the path as a clipping region
+        
+        // Create gradient
+        const gradient = ctx.createLinearGradient(
+            bodyWidth * 0.5, -bodyHeight * 0.2,
+            -bodyWidth * 0.5, bodyHeight * 0.2
+        );
+        
+        // Add color stops for smooth gradient
+        gradient.addColorStop(0, `rgba(${this.bodyColor.primary.r}, ${this.bodyColor.primary.g}, ${this.bodyColor.primary.b}, 1)`);
+        gradient.addColorStop(0.4, `rgba(${this.bodyColor.secondary.r}, ${this.bodyColor.secondary.g}, ${this.bodyColor.secondary.b}, 1)`);
+        gradient.addColorStop(0.6, `rgba(${this.bodyColor.secondary.r}, ${this.bodyColor.secondary.g}, ${this.bodyColor.secondary.b}, 1)`);
+        gradient.addColorStop(1, `rgba(${this.bodyColor.primary.r}, ${this.bodyColor.primary.g}, ${this.bodyColor.primary.b}, 1)`);
+        
+        // Fill the clipped shape with the gradient
+        ctx.fillStyle = gradient;
+        ctx.fillRect(-bodyWidth, -bodyHeight, bodyWidth * 2, bodyHeight * 2);
+        
+        // Restore context
+        ctx.restore();
+    }
+    
+    drawTail() {
+        this.canvas.push();
+        
+        // Move to where the tail connects with the body
+        this.canvas.translate(-this.size * this.bodyWidthRatio * 0.6, 0);
+        
+        // Apply tail wagging rotation
+        this.canvas.rotate(this.canvas.radians(this.tailAngle));
+        
+        // Draw tail with gradient
+        const ctx = this.canvas.drawingContext;
+        
+        // Save context
+        ctx.save();
+        
+        // Create tail shape
+        const tailLength = this.size * 0.9;
+        const tailHeight = this.size * 0.7;
+        
+        ctx.beginPath();
+        ctx.moveTo(0, 0); // Tail start
+        ctx.quadraticCurveTo(
+            -tailLength * 0.7, -tailHeight * 0.5,
+            -tailLength, -tailHeight
+        );
+        ctx.quadraticCurveTo(
+            -tailLength * 0.6, 0,
+            -tailLength, tailHeight
+        );
+        ctx.quadraticCurveTo(
+            -tailLength * 0.7, tailHeight * 0.5,
+            0, 0
+        );
+        
+        ctx.closePath();
+        ctx.clip(); // Use the path as a clipping region
+        
+        // Create gradient
+        const gradient = ctx.createLinearGradient(0, 0, -tailLength, 0);
+        
+        // Add color stops for smooth gradient
+        gradient.addColorStop(0, `rgba(${this.tailColor.primary.r}, ${this.tailColor.primary.g}, ${this.tailColor.primary.b}, 1)`);
+        gradient.addColorStop(0.7, `rgba(${this.tailColor.secondary.r}, ${this.tailColor.secondary.g}, ${this.tailColor.secondary.b}, 1)`);
+        gradient.addColorStop(1, `rgba(${this.tailColor.primary.r}, ${this.tailColor.primary.g}, ${this.tailColor.primary.b}, 0.8)`);
+        
+        // Fill the clipped shape with the gradient
+        ctx.fillStyle = gradient;
+        ctx.fillRect(-tailLength, -tailHeight, tailLength, tailHeight * 2);
+        
+        // Restore context
+        ctx.restore();
+        
+        this.canvas.pop();
+    }
+    
+    drawFins() {
+        // Draw dorsal fin (top)
+        this.canvas.fill(this.finColor.r, this.finColor.g, this.finColor.b);
+        this.canvas.noStroke();
+        
+        // Dorsal fin
+        this.canvas.beginShape();
+        this.canvas.vertex(this.size * 0.1, 0);
+        this.canvas.bezierVertex(
+            this.size * 0.2, -this.size * 0.6,
+            -this.size * 0.2, -this.size * 0.7,
+            -this.size * 0.3, -this.size * 0.1
+        );
+        this.canvas.endShape(this.canvas.CLOSE);
+        
+        // Pectoral fin (side)
+        this.canvas.beginShape();
+        this.canvas.vertex(this.size * 0.3, this.size * 0.1);
+        this.canvas.bezierVertex(
+            this.size * 0.2, this.size * 0.3,
+            -this.size * 0.1, this.size * 0.4,
+            -this.size * 0.1, this.size * 0.2
+        );
+        this.canvas.endShape(this.canvas.CLOSE);
+    }
+    
+    drawEye() {
+        // Calculate eye position based on fish size
+        const eyeX = this.size * 0.35;
+        const eyeY = -this.size * 0.1;
+        const eyeSize = this.size * 0.15;
+        
+        // White of eye
+        this.canvas.fill(255);
+        this.canvas.ellipse(eyeX, eyeY, eyeSize, eyeSize);
+        
+        // Pupil - slightly offset for more natural look
+        this.canvas.fill(0);
+        this.canvas.ellipse(eyeX + eyeSize * 0.1, eyeY, eyeSize * 0.5, eyeSize * 0.5);
+        
+        // Add a highlight on the eye
+        this.canvas.fill(255, 255, 255, 200);
+        this.canvas.ellipse(eyeX - eyeSize * 0.2, eyeY - eyeSize * 0.2, eyeSize * 0.2, eyeSize * 0.2);
     }
 }
 
@@ -938,19 +1139,19 @@ class UnderwaterTheme extends Theme {
         // Sort bubbles by depth (furthest first, closest last)
         this.bubbles.sort((a, b) => b.getZIndex() - a.getZIndex());
         
-        // Draw all planktons
+        // Draw planktons (furthest back)
         for (let plankton of this.planktons) {
             plankton.draw();
         }
-
-        // Draw all fish
-        for (let fish of this.fishes) {
-            fish.draw();
-        }
         
-        // Draw all bubbles (sorted by depth)
+        // Draw bubbles (in the middle layer)
         for (let bubble of this.bubbles) {
             bubble.draw();
+        }
+
+        // Draw fish (in the foreground, on top of bubbles)
+        for (let fish of this.fishes) {
+            fish.draw();
         }
     }
     
