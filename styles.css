@@ -295,6 +295,14 @@ input[type="color"]::-webkit-color-swatch {
     content: "▼";
     font-size: 12px;
     transition: transform 0.3s ease;
+    margin-left: 8px;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    display: inline-block;
 }
 
 .audio-controls.collapsed h3::after {
@@ -349,6 +357,14 @@ input[type="color"]::-webkit-color-swatch {
     content: "▼";
     font-size: 12px;
     transition: transform 0.3s ease;
+    margin-left: 8px;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    display: inline-block;
 }
 
 .display-settings.collapsed h3::after {
@@ -952,4 +968,58 @@ input[type="color"]::-webkit-color-swatch {
     color: #888888;
     font-style: italic;
     padding: 20px;
+}
+
+/* Panel header styles for better touch feedback */
+.panel-header-clickable {
+    position: relative;
+    padding: 10px 0;
+    margin: -10px 0;
+    z-index: 5;
+}
+
+/* Visual feedback for touch interactions */
+.touch-active {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* Make the collapse/expand arrow more obvious */
+.audio-controls h3::after,
+.display-settings h3::after {
+    content: "▼";
+    font-size: 12px;
+    transition: transform 0.3s ease;
+    margin-left: 8px;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Enhanced mobile styles for panel headers */
+@media (max-width: 768px) {
+    .audio-controls h3,
+    .display-settings h3 {
+        padding: 12px 0;
+        font-size: 18px;
+    }
+    
+    .audio-controls h3::after,
+    .display-settings h3::after {
+        font-size: 14px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+    }
+    
+    /* Make sure touch targets are large enough on mobile (at least 44x44px) */
+    .panel-header-clickable {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
 }

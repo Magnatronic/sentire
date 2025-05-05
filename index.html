@@ -290,62 +290,145 @@
                 }
             }
             
-            // Collapsible panel functionality
+            // Improved collapsible panel functionality with better touch support
             const setupCollapsiblePanels = () => {
-                // Audio Settings panel
-                const audioPanel = document.querySelector('.audio-controls');
-                const audioHeader = audioPanel.querySelector('h3');
-                
-                // Use touchstart for mobile and click for desktop
-                ['click', 'touchstart'].forEach(eventType => {
-                    audioHeader.addEventListener(eventType, (e) => {
-                        if (eventType === 'touchstart') {
-                            // Prevent default to avoid both touch and click events firing
-                            e.preventDefault();
-                        }
+                try {
+                    console.log('Setting up collapsible panels with enhanced touch support');
+                    
+                    // Audio Settings panel
+                    const audioPanel = document.querySelector('.audio-controls');
+                    const audioHeader = audioPanel.querySelector('h3');
+                    
+                    // Create a more robust touch/click handler
+                    const toggleAudioPanel = (e) => {
+                        console.log('Audio panel toggle triggered:', e.type);
+                        e.preventDefault(); // Prevent default for all event types
+                        e.stopPropagation(); // Stop propagation
                         audioPanel.classList.toggle('collapsed');
-                    }, { passive: false });
-                });
-                
-                // Display Settings panel
-                const displayPanel = document.querySelector('.display-settings');
-                const displayHeader = displayPanel.querySelector('h3');
-                
-                // Use touchstart for mobile and click for desktop
-                ['click', 'touchstart'].forEach(eventType => {
-                    displayHeader.addEventListener(eventType, (e) => {
-                        if (eventType === 'touchstart') {
-                            // Prevent default to avoid both touch and click events firing
-                            e.preventDefault();
+                        return false; // Ensure no further action
+                    };
+                    
+                    // Remove any existing event listeners (in case this runs multiple times)
+                    audioHeader.removeEventListener('click', toggleAudioPanel);
+                    audioHeader.removeEventListener('touchend', toggleAudioPanel);
+                    
+                    // Add both event listeners with proper options
+                    audioHeader.addEventListener('click', toggleAudioPanel);
+                    audioHeader.addEventListener('touchend', toggleAudioPanel, { passive: false });
+                    
+                    // Direct style manipulation as fallback
+                    audioHeader.style.cursor = 'pointer';
+                    audioHeader.style.webkitTapHighlightColor = 'rgba(0,0,0,0)';
+                    audioHeader.setAttribute('role', 'button');
+                    audioHeader.setAttribute('tabindex', '0');
+                    
+                    // Add keyboard support
+                    audioHeader.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            toggleAudioPanel(e);
                         }
+                    });
+                    
+                    // Display Settings panel
+                    const displayPanel = document.querySelector('.display-settings');
+                    const displayHeader = displayPanel.querySelector('h3');
+                    
+                    // Create a more robust touch/click handler
+                    const toggleDisplayPanel = (e) => {
+                        console.log('Display panel toggle triggered:', e.type);
+                        e.preventDefault();
+                        e.stopPropagation();
                         displayPanel.classList.toggle('collapsed');
-                    }, { passive: false });
-                });
-                
-                // Auto-collapse panels on smaller screens
-                const handleResponsiveLayout = () => {
-                    const isMobile = window.innerWidth <= 768;
-                    if (isMobile) {
-                        // Optional: Auto-collapse one panel on mobile to save space
-                        if (!audioPanel.classList.contains('collapsed') && 
-                            !displayPanel.classList.contains('collapsed')) {
-                            displayPanel.classList.add('collapsed');
+                        return false;
+                    };
+                    
+                    // Remove any existing event listeners
+                    displayHeader.removeEventListener('click', toggleDisplayPanel);
+                    displayHeader.removeEventListener('touchend', toggleDisplayPanel);
+                    
+                    // Add both event listeners with proper options
+                    displayHeader.addEventListener('click', toggleDisplayPanel);
+                    displayHeader.addEventListener('touchend', toggleDisplayPanel, { passive: false });
+                    
+                    // Direct style manipulation as fallback
+                    displayHeader.style.cursor = 'pointer';
+                    displayHeader.style.webkitTapHighlightColor = 'rgba(0,0,0,0)';
+                    displayHeader.setAttribute('role', 'button');
+                    displayHeader.setAttribute('tabindex', '0');
+                    
+                    // Add keyboard support
+                    displayHeader.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            toggleDisplayPanel(e);
                         }
+                    });
+                    
+                    // Add a class to make it obvious these are clickable
+                    audioHeader.classList.add('panel-header-clickable');
+                    displayHeader.classList.add('panel-header-clickable');
+                    
+                    // Auto-collapse panels on smaller screens
+                    const handleResponsiveLayout = () => {
+                        const isMobile = window.innerWidth <= 768;
+                        if (isMobile) {
+                            // Optional: Auto-collapse one panel on mobile to save space
+                            if (!audioPanel.classList.contains('collapsed') && 
+                                !displayPanel.classList.contains('collapsed')) {
+                                displayPanel.classList.add('collapsed');
+                            }
+                        }
+                    };
+                    
+                    // Call once on load
+                    handleResponsiveLayout();
+                    
+                    // Add resize event listener
+                    window.addEventListener('resize', handleResponsiveLayout);
+                    
+                    // Add visual feedback on mobile touch
+                    const addTouchFeedback = (element) => {
+                        element.addEventListener('touchstart', () => {
+                            element.classList.add('touch-active');
+                        }, { passive: true });
+                        
+                        element.addEventListener('touchend', () => {
+                            element.classList.remove('touch-active');
+                        }, { passive: true });
+                        
+                        element.addEventListener('touchcancel', () => {
+                            element.classList.remove('touch-active');
+                        }, { passive: true });
+                    };
+                    
+                    addTouchFeedback(audioHeader);
+                    addTouchFeedback(displayHeader);
+                    
+                    // Manually trigger a collapse/expand to make sure styles are applied properly
+                    if (!audioPanel.classList.contains('collapsed')) {
+                        audioPanel.classList.add('collapsed');
+                        setTimeout(() => {
+                            audioPanel.classList.remove('collapsed');
+                        }, 50);
                     }
-                };
-                
-                // Call once on load
-                handleResponsiveLayout();
-                
-                // Add resize event listener
-                window.addEventListener('resize', handleResponsiveLayout);
-                
-                // Debug log for mobile troubleshooting
-                console.log('Collapsible panels initialized');
+                    
+                    if (!displayPanel.classList.contains('collapsed')) {
+                        displayPanel.classList.add('collapsed');
+                        setTimeout(() => {
+                            displayPanel.classList.remove('collapsed');
+                        }, 50);
+                    }
+                    
+                    console.log('Collapsible panels fully initialized');
+                    
+                } catch (error) {
+                    console.error('Error setting up collapsible panels:', error);
+                }
             };
             
-            // Run setup immediately instead of with a timeout
+            // Run setup immediately AND after a short delay to ensure it works
             setupCollapsiblePanels();
+            // Also try again after a delay in case DOM is still loading
+            setTimeout(setupCollapsiblePanels, 300);
         });
     </script>
 </body>
