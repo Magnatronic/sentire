@@ -26,203 +26,212 @@
                 <button id="fullscreen-btn">Full Screen</button>
             </div>
             
-            <!-- Audio Controls Section - Always visible for all themes -->
+            <!-- Audio Controls Section - Now collapsible -->
             <div class="audio-controls">
                 <h3>Audio Settings</h3>
-                
-                <div class="audio-toggle">
-                    <button id="microphone-toggle" class="toggle-btn">Enable Microphone</button>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="audio-threshold">Volume Threshold:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="audio-threshold" min="0" max="100" value="50" class="slider">
-                        <span class="slider-value" id="audio-threshold-value">50</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="audio-sensitivity">Sensitivity:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="audio-sensitivity" min="0.1" max="5" step="0.1" value="1.5" class="slider">
-                        <span class="slider-value" id="audio-sensitivity-value">1.5</span>
-                    </div>
-                </div>
-                
-                <div class="audio-visualizer-container">
-                    <canvas id="audio-visualizer" width="230" height="80"></canvas>
-                </div>
-            </div>
-            
-            <div class="theme-controls snowflakes-controls">
-                <div class="color-pickers">
-                    <div class="color-picker-container">
-                        <label for="background-color">Background Color:</label>
-                        <input type="color" id="background-color" value="#000A28">
+                <div class="audio-controls-content">
+                    <div class="audio-toggle">
+                        <button id="microphone-toggle" class="toggle-btn">Enable Microphone</button>
                     </div>
                     
-                    <div class="color-picker-container">
-                        <label for="snowflake-color">Snowflake Color:</label>
-                        <input type="color" id="snowflake-color" value="#FFFFFF">
+                    <div class="slider-container">
+                        <label for="audio-threshold">Volume Threshold:</label>
+                        <div class="slider-with-value">
+                            <input type="range" id="audio-threshold" min="0" max="100" value="50" class="slider">
+                            <span class="slider-value" id="audio-threshold-value">50</span>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="snowflake-count">Number of Snowflakes:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="snowflake-count" min="50" max="500" value="200" class="slider">
-                        <span class="slider-value" id="snowflake-count-value">200</span>
+                    
+                    <div class="slider-container">
+                        <label for="audio-sensitivity">Sensitivity:</label>
+                        <div class="slider-with-value">
+                            <input type="range" id="audio-sensitivity" min="0.1" max="5" step="0.1" value="1.5" class="slider">
+                            <span class="slider-value" id="audio-sensitivity-value">1.5</span>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="snowflake-size">Snowflake Size:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="snowflake-size" min="1" max="40" value="10" class="slider">
-                        <span class="slider-value" id="snowflake-size-value">10</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="snowflake-speed">Fall Speed:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="snowflake-speed" min="0.5" max="5" value="1" step="0.1" class="slider">
-                        <span class="slider-value" id="snowflake-speed-value">1</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="wobble-intensity">Wobble Intensity:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="wobble-intensity" min="0" max="10" value="5" class="slider">
-                        <span class="slider-value" id="wobble-intensity-value">5</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="wind-strength">Wind Strength:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="wind-strength" min="0" max="10" value="0" class="slider">
-                        <span class="slider-value" id="wind-strength-value">0</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="wind-direction">Wind Direction:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="wind-direction" min="0" max="360" value="0" class="slider">
-                        <span class="slider-value" id="wind-direction-value">0°</span>
+                    
+                    <div class="audio-visualizer-container">
+                        <canvas id="audio-visualizer" width="230" height="80"></canvas>
                     </div>
                 </div>
             </div>
             
-            <div class="theme-controls underwater-controls" style="display: none;">
-                <div class="color-pickers">
-                    <div class="color-picker-container">
-                        <label for="underwater-background-color">Background Color:</label>
-                        <input type="color" id="underwater-background-color" value="#003264">
+            <!-- Display Settings Panel - Houses theme-specific controls -->
+            <div class="display-settings">
+                <h3>Display Settings</h3>
+                <div class="display-settings-content">
+                    <!-- Snowflakes Controls -->
+                    <div class="theme-controls snowflakes-controls">
+                        <div class="color-pickers">
+                            <div class="color-picker-container">
+                                <label for="background-color">Background Color:</label>
+                                <input type="color" id="background-color" value="#000A28">
+                            </div>
+                            
+                            <div class="color-picker-container">
+                                <label for="snowflake-color">Snowflake Color:</label>
+                                <input type="color" id="snowflake-color" value="#FFFFFF">
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="snowflake-count">Number of Snowflakes:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="snowflake-count" min="50" max="500" value="200" class="slider">
+                                <span class="slider-value" id="snowflake-count-value">200</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="snowflake-size">Snowflake Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="snowflake-size" min="1" max="40" value="10" class="slider">
+                                <span class="slider-value" id="snowflake-size-value">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="snowflake-speed">Fall Speed:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="snowflake-speed" min="0.5" max="5" value="1" step="0.1" class="slider">
+                                <span class="slider-value" id="snowflake-speed-value">1</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="wobble-intensity">Wobble Intensity:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="wobble-intensity" min="0" max="10" value="5" class="slider">
+                                <span class="slider-value" id="wobble-intensity-value">5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="wind-strength">Wind Strength:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="wind-strength" min="0" max="10" value="0" class="slider">
+                                <span class="slider-value" id="wind-strength-value">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="wind-direction">Wind Direction:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="wind-direction" min="0" max="360" value="0" class="slider">
+                                <span class="slider-value" id="wind-direction-value">0°</span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="color-picker-container">
-                        <label for="bubble-color">Bubble Color:</label>
-                        <input type="color" id="bubble-color" value="#DCEFFF">
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="bubble-count">Number of Bubbles:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="bubble-count" min="50" max="300" value="100" class="slider">
-                        <span class="slider-value" id="bubble-count-value">100</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="fish-count">Number of Fish:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="fish-count" min="0" max="40" value="5" class="slider">
-                        <span class="slider-value" id="fish-count-value">5</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="bubble-size">Bubble Size:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="bubble-size" min="1" max="40" value="10" class="slider">
-                        <span class="slider-value" id="bubble-size-value">10</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="fish-size">Fish Size:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="fish-size" min="1" max="20" value="10" class="slider">
-                        <span class="slider-value" id="fish-size-value">10</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="bubble-speed">Bubble Speed:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="bubble-speed" min="0.5" max="3" value="1" step="0.1" class="slider">
-                        <span class="slider-value" id="bubble-speed-value">1</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="fish-speed">Fish Speed:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="fish-speed" min="0.5" max="3" value="1" step="0.1" class="slider">
-                        <span class="slider-value" id="fish-speed-value">1</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="underwater-wobble-intensity">Bubble Wobble:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="underwater-wobble-intensity" min="0" max="10" value="5" class="slider">
-                        <span class="slider-value" id="underwater-wobble-intensity-value">5</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="current-strength">Current Strength:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="current-strength" min="0" max="10" value="0" class="slider">
-                        <span class="slider-value" id="current-strength-value">0</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="current-direction">Current Direction:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="current-direction" min="0" max="360" value="0" class="slider">
-                        <span class="slider-value" id="current-direction-value">0°</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="plankton-count">Plankton Density:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="plankton-count" min="0" max="200" value="50" class="slider">
-                        <span class="slider-value" id="plankton-count-value">50</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="plankton-size">Plankton Size:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="plankton-size" min="1" max="20" value="10" class="slider">
-                        <span class="slider-value" id="plankton-size-value">10</span>
-                    </div>
-                </div>
-                
-                <div class="slider-container">
-                    <label for="plankton-depth">Depth Variation:</label>
-                    <div class="slider-with-value">
-                        <input type="range" id="plankton-depth" min="0" max="10" value="5" class="slider">
-                        <span class="slider-value" id="plankton-depth-value">5</span>
+                    <!-- Underwater Controls -->
+                    <div class="theme-controls underwater-controls" style="display: none;">
+                        <div class="color-pickers">
+                            <div class="color-picker-container">
+                                <label for="underwater-background-color">Background Color:</label>
+                                <input type="color" id="underwater-background-color" value="#003264">
+                            </div>
+                            
+                            <div class="color-picker-container">
+                                <label for="bubble-color">Bubble Color:</label>
+                                <input type="color" id="bubble-color" value="#DCEFFF">
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="bubble-count">Number of Bubbles:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="bubble-count" min="50" max="300" value="100" class="slider">
+                                <span class="slider-value" id="bubble-count-value">100</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="fish-count">Number of Fish:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="fish-count" min="0" max="40" value="5" class="slider">
+                                <span class="slider-value" id="fish-count-value">5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="bubble-size">Bubble Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="bubble-size" min="1" max="40" value="10" class="slider">
+                                <span class="slider-value" id="bubble-size-value">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="fish-size">Fish Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="fish-size" min="1" max="20" value="10" class="slider">
+                                <span class="slider-value" id="fish-size-value">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="bubble-speed">Bubble Speed:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="bubble-speed" min="0.5" max="3" value="1" step="0.1" class="slider">
+                                <span class="slider-value" id="bubble-speed-value">1</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="fish-speed">Fish Speed:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="fish-speed" min="0.5" max="3" value="1" step="0.1" class="slider">
+                                <span class="slider-value" id="fish-speed-value">1</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="underwater-wobble-intensity">Bubble Wobble:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="underwater-wobble-intensity" min="0" max="10" value="5" class="slider">
+                                <span class="slider-value" id="underwater-wobble-intensity-value">5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="current-strength">Current Strength:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="current-strength" min="0" max="10" value="0" class="slider">
+                                <span class="slider-value" id="current-strength-value">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="current-direction">Current Direction:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="current-direction" min="0" max="360" value="0" class="slider">
+                                <span class="slider-value" id="current-direction-value">0°</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="plankton-count">Plankton Density:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="plankton-count" min="0" max="200" value="50" class="slider">
+                                <span class="slider-value" id="plankton-count-value">50</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="plankton-size">Plankton Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="plankton-size" min="1" max="20" value="10" class="slider">
+                                <span class="slider-value" id="plankton-size-value">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="plankton-depth">Depth Variation:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="plankton-depth" min="0" max="10" value="5" class="slider">
+                                <span class="slider-value" id="plankton-depth-value">5</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -280,6 +289,46 @@
                     }
                 }
             }
+            
+            // Collapsible panel functionality
+            const setupCollapsiblePanels = () => {
+                // Audio Settings panel
+                const audioPanel = document.querySelector('.audio-controls');
+                const audioHeader = audioPanel.querySelector('h3');
+                
+                audioHeader.addEventListener('click', () => {
+                    audioPanel.classList.toggle('collapsed');
+                });
+                
+                // Display Settings panel
+                const displayPanel = document.querySelector('.display-settings');
+                const displayHeader = displayPanel.querySelector('h3');
+                
+                displayHeader.addEventListener('click', () => {
+                    displayPanel.classList.toggle('collapsed');
+                });
+                
+                // Auto-collapse panels on smaller screens
+                const handleResponsiveLayout = () => {
+                    const isMobile = window.innerWidth <= 768;
+                    if (isMobile) {
+                        // Optional: Auto-collapse one panel on mobile to save space
+                        if (!audioPanel.classList.contains('collapsed') && 
+                            !displayPanel.classList.contains('collapsed')) {
+                            displayPanel.classList.add('collapsed');
+                        }
+                    }
+                };
+                
+                // Call once on load
+                handleResponsiveLayout();
+                
+                // Add resize event listener
+                window.addEventListener('resize', handleResponsiveLayout);
+            };
+            
+            // Setup collapsible panels after a small delay to ensure all UI elements are ready
+            setTimeout(setupCollapsiblePanels, 100);
         });
     </script>
 </body>
