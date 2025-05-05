@@ -296,16 +296,30 @@
                 const audioPanel = document.querySelector('.audio-controls');
                 const audioHeader = audioPanel.querySelector('h3');
                 
-                audioHeader.addEventListener('click', () => {
-                    audioPanel.classList.toggle('collapsed');
+                // Use touchstart for mobile and click for desktop
+                ['click', 'touchstart'].forEach(eventType => {
+                    audioHeader.addEventListener(eventType, (e) => {
+                        if (eventType === 'touchstart') {
+                            // Prevent default to avoid both touch and click events firing
+                            e.preventDefault();
+                        }
+                        audioPanel.classList.toggle('collapsed');
+                    }, { passive: false });
                 });
                 
                 // Display Settings panel
                 const displayPanel = document.querySelector('.display-settings');
                 const displayHeader = displayPanel.querySelector('h3');
                 
-                displayHeader.addEventListener('click', () => {
-                    displayPanel.classList.toggle('collapsed');
+                // Use touchstart for mobile and click for desktop
+                ['click', 'touchstart'].forEach(eventType => {
+                    displayHeader.addEventListener(eventType, (e) => {
+                        if (eventType === 'touchstart') {
+                            // Prevent default to avoid both touch and click events firing
+                            e.preventDefault();
+                        }
+                        displayPanel.classList.toggle('collapsed');
+                    }, { passive: false });
                 });
                 
                 // Auto-collapse panels on smaller screens
@@ -325,10 +339,13 @@
                 
                 // Add resize event listener
                 window.addEventListener('resize', handleResponsiveLayout);
+                
+                // Debug log for mobile troubleshooting
+                console.log('Collapsible panels initialized');
             };
             
-            // Setup collapsible panels after a small delay to ensure all UI elements are ready
-            setTimeout(setupCollapsiblePanels, 100);
+            // Run setup immediately instead of with a timeout
+            setupCollapsiblePanels();
         });
     </script>
 </body>
