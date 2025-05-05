@@ -144,6 +144,152 @@ class Snowflake {
 }
 
 /**
+ * Explosion effect class for snowflake theme
+ */
+class SnowflakeExplosion {
+    constructor(canvas, x, y, color, size = 1, particleCount = 25) {
+        this.canvas = canvas;
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.size = size;
+        this.particleCount = particleCount;
+        this.particles = [];
+        this.lifespan = 100; // How long the explosion lasts
+        this.age = 0;
+        this.active = true;
+        
+        // Create particles
+        this.createParticles();
+
+        // Debug info
+        this._debugInfo = {
+            createdAt: Date.now(),
+            position: { x, y },
+            color: { ...color },
+            size,
+            particleCount,
+            particlesCreated: this.particles.length
+        };
+    }
+    
+    createParticles() {
+        for (let i = 0; i < this.particleCount; i++) {
+            const angle = this.canvas.random(0, this.canvas.TWO_PI);
+            const speed = this.canvas.random(1, 5) * this.size;
+            const particleSize = this.canvas.random(3, 10) * this.size;
+            const lifespan = this.canvas.random(20, this.lifespan);
+            
+            this.particles.push({
+                x: this.x,
+                y: this.y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                size: particleSize,
+                alpha: 255,
+                lifespan: lifespan,
+                sparkle: this.canvas.random() > 0.7, // Some particles will sparkle
+                rotation: this.canvas.random(0, this.canvas.TWO_PI),
+                rotationSpeed: this.canvas.random(-0.1, 0.1)
+            });
+        }
+    }
+    
+    update() {
+        if (!this.active) return;
+        
+        // Age the explosion
+        this.age++;
+        if (this.age >= this.lifespan) {
+            this.active = false;
+            return;
+        }
+        
+        // Update all particles
+        for (let p of this.particles) {
+            // Move particle
+            p.x += p.vx;
+            p.y += p.vy;
+            
+            // Apply some drag
+            p.vx *= 0.97;
+            p.vy *= 0.97;
+            
+            // Add slight gravity
+            p.vy += 0.05;
+            
+            // Update rotation
+            p.rotation += p.rotationSpeed;
+            
+            // Fade out based on particle's lifespan
+            p.alpha = this.canvas.map(p.lifespan - (this.age * 0.8), 0, p.lifespan, 0, 255);
+            
+            // Make particle sparkle if it's a sparkling one
+            if (p.sparkle) {
+                p.alpha *= 0.7 + 0.3 * Math.sin(this.age * 0.3 + p.rotation);
+            }
+        }
+
+        // Add extra debug info about lifetime
+        if (this.age === 1 || this.age === Math.floor(this.lifespan / 2) || this.age === this.lifespan - 1) {
+            this._debugInfo.age = this.age;
+            this._debugInfo.remainingParticles = this.particles.filter(p => p.alpha > 0).length;
+            this._debugInfo.lifespanProgress = `${Math.round((this.age / this.lifespan) * 100)}%`;
+            
+            if (window.sentireApp && window.sentireApp.stateManager && 
+                window.sentireApp.stateManager.state.debug) {
+                console.log(`SnowflakeExplosion: Progress update`, this._debugInfo);
+            }
+        }
+    }
+    
+    draw() {
+        if (!this.active) return;
+        
+        // Draw all particles
+        this.canvas.push();
+        this.canvas.noStroke();
+        
+        for (let p of this.particles) {
+            if (p.alpha <= 0) continue;
+            
+            this.canvas.push();
+            this.canvas.translate(p.x, p.y);
+            this.canvas.rotate(p.rotation);
+            
+            // Set fill color with alpha
+            this.canvas.fill(this.color.r, this.color.g, this.color.b, p.alpha);
+            
+            // Draw snowflake particle
+            if (p.sparkle && this.age % 3 === 0) {
+                // For sparkling particles, draw a bright star sometimes
+                this.canvas.fill(255, 255, 255, p.alpha);
+                this.canvas.ellipse(0, 0, p.size * 1.2);
+            } else {
+                // Draw a simple snowflake shape
+                for (let i = 0; i < 3; i++) {
+                    this.canvas.push();
+                    this.canvas.rotate(this.canvas.PI * i / 3);
+                    this.canvas.ellipse(0, 0, p.size * 0.2, p.size);
+                    this.canvas.pop();
+                }
+                
+                // Draw center circle
+                this.canvas.ellipse(0, 0, p.size * 0.5);
+            }
+            
+            this.canvas.pop();
+        }
+        
+        this.canvas.pop();
+    }
+    
+    isFinished() {
+        return !this.active;
+    }
+}
+
+/**
  * Snowflakes Theme class that extends the base Theme
  * Integrated with state management system
  */
@@ -162,6 +308,20 @@ class SnowflakesTheme extends Theme {
         // Default colors
         this.snowflakeColor = { r: 255, g: 255, b: 255 }; // White
         this.backgroundColor = { r: 0, g: 10, b: 40 }; // Dark blue
+        
+        // Audio-reactive effects
+        this.explosions = []; // Array to store active explosions
+        this.explosionConfig = {
+            enabled: true,              // Whether explosions are enabled
+            particleCount: 25,          // Number of particles per explosion
+            sizeMultiplier: 1.0,        // Size multiplier for explosions
+            colorMatchSnowflakes: true, // Whether to match snowflake color
+            maxExplosions: 5,           // Maximum simultaneous explosions
+            triggerThreshold: 70        // Volume threshold to trigger (0-100)
+        };
+        
+        // Audio manager reference will be set when available
+        this.audioManager = null;
         
         // Subscribe to state changes if state manager is provided
         if (this.stateManager) {
@@ -188,6 +348,11 @@ class SnowflakesTheme extends Theme {
         // Call the parent init method
         super.init(canvas);
         
+        // Connect to audio manager if available
+        if (window.sentireApp && window.sentireApp.audioManager) {
+            this.connectToAudioManager(window.sentireApp.audioManager);
+        }
+        
         // Apply state configuration if available
         if (this.stateManager) {
             this.applyStateConfig();
@@ -198,6 +363,136 @@ class SnowflakesTheme extends Theme {
         }
     }
     
+    /**
+     * Connect to the audio manager and set up event listeners
+     * @param {AudioManager} audioManager - The audio manager instance
+     */
+    connectToAudioManager(audioManager) {
+        this.audioManager = audioManager;
+        
+        // Register for volume threshold events
+        this.audioManager.on('volumeThreshold', this.handleVolumeThreshold.bind(this));
+        
+        if (this.stateManager && this.stateManager.state.debug) {
+            console.log('SnowflakesTheme: Connected to audio manager');
+        }
+    }
+    
+    /**
+     * Handle volume threshold events from the audio manager
+     * @param {Object} data - Event data from the audio manager
+     */
+    handleVolumeThreshold(data) {
+        // Only respond if this theme is active and explosions are enabled
+        if (!this.isRunning || !this.audioReactiveConfig.enabled) return;
+        
+        // Debug what's happening with this event
+        if (this.stateManager && this.stateManager.state.debug) {
+            console.log(`SnowflakesTheme: Audio trigger received with volume ${data.volume.toFixed(1)}`, {
+                isRunning: this.isRunning,
+                explosionsEnabled: this.audioReactiveConfig.enabled,
+                themeActive: this.stateManager ? (this.stateManager.state.currentTheme === 'snowflakes') : true,
+                audioData: data,
+                currentNumEffects: this.explosions.length
+            });
+        }
+
+        // Check if this theme is active in the state manager
+        if (this.stateManager && this.stateManager.state.currentTheme !== 'snowflakes') {
+            return;
+        }
+        
+        // Only trigger if the volume exceeds our specific threshold
+        if (data.volume < this.audioReactiveConfig.triggerThreshold) {
+            if (this.stateManager && this.stateManager.state.debug) {
+                console.log(`SnowflakesTheme: Volume ${data.volume.toFixed(1)} below threshold ${this.audioReactiveConfig.triggerThreshold}`);
+            }
+            return;
+        }
+        
+        // Limit the number of simultaneous explosions
+        if (this.explosions.length >= this.audioReactiveConfig.maxEffects) {
+            if (this.stateManager && this.stateManager.state.debug) {
+                console.log(`SnowflakesTheme: Max effects limit reached (${this.explosions.length}/${this.audioReactiveConfig.maxEffects})`);
+            }
+            return;
+        }
+        
+        // Create a snowflake explosion at a random position
+        this.createRandomExplosion(data.volume);
+        
+        if (this.stateManager && this.stateManager.state.debug) {
+            console.log(`SnowflakesTheme: Created explosion from audio trigger (volume: ${data.volume.toFixed(1)})`);
+        }
+    }
+    
+    /**
+     * Create a random explosion based on audio volume
+     * @param {number} volume - The audio volume that triggered the explosion
+     */
+    createRandomExplosion(volume) {
+        // Generate a random position for the explosion
+        const x = this.canvas.random(this.canvas.width * 0.1, this.canvas.width * 0.9);
+        const y = this.canvas.random(this.canvas.height * 0.1, this.canvas.height * 0.9);
+        
+        // Calculate explosion size based on volume and config
+        const volumeRatio = volume / 100; // 0-1 range
+        const baseSize = this.explosionConfig.sizeMultiplier;
+        const sizeMultiplier = baseSize * (0.7 + volumeRatio * 0.6); // Size varies with volume
+        
+        // Use snowflake color or generate a custom color
+        let color;
+        if (this.explosionConfig.colorMatchSnowflakes) {
+            color = this.snowflakeColor;
+        } else {
+            // Generate a pastel color based on volume
+            const hue = (this.canvas.frameCount * 2 + volume * 2) % 360;
+            const saturation = 80;
+            const brightness = 95;
+            
+            // Convert HSB to RGB
+            const rgb = this.hsbToRgb(hue, saturation, brightness);
+            color = { r: rgb[0], g: rgb[1], b: rgb[2] };
+        }
+        
+        // Calculate particle count based on volume
+        const particleCount = Math.floor(this.explosionConfig.particleCount * (0.8 + volumeRatio * 0.5));
+        
+        // Create the explosion
+        const explosion = new SnowflakeExplosion(
+            this.canvas,
+            x,
+            y,
+            color,
+            sizeMultiplier,
+            particleCount
+        );
+        
+        // Add to explosions array
+        this.explosions.push(explosion);
+    }
+    
+    /**
+     * Convert HSB color to RGB
+     * @param {number} h - Hue (0-360)
+     * @param {number} s - Saturation (0-100)
+     * @param {number} b - Brightness (0-100)
+     * @returns {Array} RGB values as [r, g, b]
+     */
+    hsbToRgb(h, s, b) {
+        s /= 100;
+        b /= 100;
+        
+        const k = (n) => (n + h / 60) % 6;
+        const f = (n) => b * (1 - s * Math.max(0, Math.min(k(n), 4 - k(n), 1)));
+        
+        return [
+            Math.round(255 * f(5)),
+            Math.round(255 * f(3)),
+            Math.round(255 * f(1))
+        ];
+    }
+
     /**
      * Apply the current state configuration to the theme
      */
@@ -230,11 +525,44 @@ class SnowflakesTheme extends Theme {
         // Set wind properties
         this.setWind(config.windStrength, config.windDirection);
         
+        // Set up audio reactive configuration
+        this.setupAudioReactiveConfig();
+        
         // Set running state
         if (this.stateManager.state.isRunning) {
             this.start();
         } else {
             this.stop();
+        }
+    }
+
+    /**
+     * Set up audio-reactive configuration
+     */
+    setupAudioReactiveConfig() {
+        // Create audio reactive config if it doesn't exist
+        if (!this.audioReactiveConfig) {
+            this.audioReactiveConfig = {
+                enabled: true,           // Whether audio-reactive effects are enabled
+                triggerThreshold: 35,    // Volume threshold to trigger effects (lower than default)
+                maxEffects: 8,           // Maximum number of simultaneous effects
+                particleCount: 25,       // Particles per explosion
+                sizeMultiplier: 1.0      // Size multiplier for effects
+            };
+        }
+        
+        // Apply explosion config to audio reactive config for compatibility
+        this.audioReactiveConfig.particleCount = this.explosionConfig.particleCount;
+        this.audioReactiveConfig.sizeMultiplier = this.explosionConfig.sizeMultiplier;
+        this.audioReactiveConfig.maxEffects = this.explosionConfig.maxExplosions;
+        this.audioReactiveConfig.enabled = this.explosionConfig.enabled;
+        
+        // Use a lower trigger threshold than in the explosion config
+        // This makes it more responsive
+        this.audioReactiveConfig.triggerThreshold = 35;
+        
+        if (this.stateManager && this.stateManager.state.debug) {
+            console.log('SnowflakesTheme: Audio reactive config initialized', this.audioReactiveConfig);
         }
     }
 
@@ -351,6 +679,16 @@ class SnowflakesTheme extends Theme {
         for (let snowflake of this.snowflakes) {
             snowflake.update();
         }
+        
+        // Update all explosions
+        for (let i = this.explosions.length - 1; i >= 0; i--) {
+            this.explosions[i].update();
+            
+            // Remove finished explosions
+            if (this.explosions[i].isFinished()) {
+                this.explosions.splice(i, 1);
+            }
+        }
     }
 
     draw() {
@@ -362,6 +700,11 @@ class SnowflakesTheme extends Theme {
         // Draw all snowflakes
         for (let snowflake of this.snowflakes) {
             snowflake.draw();
+        }
+        
+        // Draw all explosions
+        for (let explosion of this.explosions) {
+            explosion.draw();
         }
     }
 
@@ -397,5 +740,42 @@ class SnowflakesTheme extends Theme {
                 console.log('SnowflakesTheme: Updated from state change');
             }
         }
+    }
+    
+    /**
+     * Set explosion configuration
+     * @param {Object} config - Configuration object with explosion settings
+     */
+    setExplosionConfig(config) {
+        // Merge with existing config, keeping defaults for any missing properties
+        this.explosionConfig = {
+            ...this.explosionConfig,
+            ...config
+        };
+        
+        if (this.stateManager && this.stateManager.state.debug) {
+            console.log('SnowflakesTheme: Updated explosion config', this.explosionConfig);
+        }
+    }
+    
+    /**
+     * Manually trigger an explosion at a specific position (for testing)
+     * @param {number} x - X coordinate
+     * @param {number} y - Y coordinate
+     * @param {number} size - Explosion size multiplier
+     */
+    triggerExplosion(x, y, size = 1) {
+        if (!this.isRunning || !this.explosionConfig.enabled) return;
+        
+        const explosion = new SnowflakeExplosion(
+            this.canvas,
+            x, 
+            y,
+            this.snowflakeColor,
+            size,
+            this.explosionConfig.particleCount
+        );
+        
+        this.explosions.push(explosion);
     }
 }
