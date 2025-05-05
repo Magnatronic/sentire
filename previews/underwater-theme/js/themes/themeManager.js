@@ -160,4 +160,39 @@ class ThemeManager {
             this.applyState();
         }
     }
+
+    /**
+     * Activate a theme - properly handling theme transitions
+     * @param {string} id - The ID of the theme to activate
+     * @param {boolean} preserveRunning - Whether to preserve the running state when switching
+     * @returns {boolean} True if activation was successful
+     */
+    activateTheme(id, preserveRunning = true) {
+        // Get current running state
+        const wasRunning = this.stateManager.state.isRunning;
+        
+        // Switch to the new theme
+        if (!this.switchTheme(id)) {
+            return false;
+        }
+        
+        // Force the theme to run setup again to reinitialize any resources
+        if (this.currentTheme && this.currentTheme.canvas) {
+            this.currentTheme.setup();
+            
+            if (this.stateManager.state.debug) {
+                console.log(`ThemeManager: Re-initialized theme "${id}" after switching`);
+            }
+        }
+        
+        // Update the state with new theme
+        this.stateManager.updateState({ currentTheme: id }, 'ThemeManager.activateTheme');
+        
+        // If the animation was running and we want to preserve that state, start the new theme
+        if (preserveRunning && wasRunning) {
+            this.startCurrentTheme();
+        }
+        
+        return true;
+    }
 }

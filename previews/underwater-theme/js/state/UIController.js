@@ -16,8 +16,7 @@ class UIController {
             themeSelect: document.getElementById('theme-select'),
             
             // Buttons
-            startBtn: document.getElementById('start-btn'),
-            stopBtn: document.getElementById('stop-btn'),
+            toggleAnimationBtn: document.getElementById('toggle-animation-btn'),
             fullscreenBtn: document.getElementById('fullscreen-btn'),
             
             // Containers
@@ -86,13 +85,9 @@ class UIController {
             this.elements.themeSelect.value = state.currentTheme;
         }
         
-        // Set button states
-        if (this.elements.startBtn) {
-            this.elements.startBtn.disabled = state.isRunning;
-        }
-        
-        if (this.elements.stopBtn) {
-            this.elements.stopBtn.disabled = !state.isRunning;
+        // Set toggle button text based on current state
+        if (this.elements.toggleAnimationBtn) {
+            this.elements.toggleAnimationBtn.textContent = state.isRunning ? 'Pause' : 'Play';
         }
         
         // Show correct theme controls
@@ -114,20 +109,16 @@ class UIController {
         if (this.elements.themeSelect) {
             this.elements.themeSelect.addEventListener('change', (e) => {
                 const newTheme = e.target.value;
-                this.stateManager.updateState({ currentTheme: newTheme }, 'themeSelect');
+                // Use the ThemeManager to handle the theme transition properly
+                window.sentireApp.themeManager.activateTheme(newTheme);
             });
         }
         
         // Button controls
-        if (this.elements.startBtn) {
-            this.elements.startBtn.addEventListener('click', () => {
-                this.stateManager.updateState({ isRunning: true }, 'startBtn');
-            });
-        }
-        
-        if (this.elements.stopBtn) {
-            this.elements.stopBtn.addEventListener('click', () => {
-                this.stateManager.updateState({ isRunning: false }, 'stopBtn');
+        if (this.elements.toggleAnimationBtn) {
+            this.elements.toggleAnimationBtn.addEventListener('click', () => {
+                const isRunning = this.stateManager.getState().isRunning;
+                this.stateManager.updateState({ isRunning: !isRunning }, 'toggleAnimationBtn');
             });
         }
         
@@ -297,13 +288,10 @@ class UIController {
             this.updateControlValues(newState.currentTheme);
         }
         
-        // Update button states if running state changed
+        // Update toggle button text if running state changed
         if (oldState.isRunning !== newState.isRunning) {
-            if (this.elements.startBtn) {
-                this.elements.startBtn.disabled = newState.isRunning;
-            }
-            if (this.elements.stopBtn) {
-                this.elements.stopBtn.disabled = !newState.isRunning;
+            if (this.elements.toggleAnimationBtn) {
+                this.elements.toggleAnimationBtn.textContent = newState.isRunning ? 'Pause' : 'Play';
             }
         }
         

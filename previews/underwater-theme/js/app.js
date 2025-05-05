@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const stateLoaded = stateStorage.loadState();
     if (stateLoaded) {
         console.log('Previous state loaded from localStorage');
+    } else {
+        // If no state was loaded, set animation to start by default
+        stateManager.updateState({ isRunning: true }, 'app.js:init');
     }
     
     // Initialize UI controller

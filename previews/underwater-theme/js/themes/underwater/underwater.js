@@ -266,6 +266,57 @@ class Fish {
 }
 
 /**
+ * Plankton class for underwater theme
+ * Small floating particles that add depth to the scene
+ */
+class Plankton {
+    constructor(canvas) {
+        this.canvas = canvas;
+        
+        // Random position throughout the canvas
+        this.x = this.canvas.random(0, this.canvas.width);
+        this.y = this.canvas.random(0, this.canvas.height);
+        
+        // Size and opacity properties
+        this.size = this.canvas.random(1, 3);
+        this.opacity = this.canvas.random(100, 200);
+        
+        // Movement properties
+        this.xSpeed = this.canvas.random(-0.2, 0.2);
+        this.ySpeed = this.canvas.random(-0.1, 0.1);
+        
+        // Color properties (slight variations of green/white)
+        this.color = {
+            r: this.canvas.random(180, 230),
+            g: this.canvas.random(230, 255),
+            b: this.canvas.random(180, 230)
+        };
+    }
+    
+    update() {
+        // Slow drifting movement
+        this.x += this.xSpeed;
+        this.y += this.ySpeed;
+        
+        // Add slight random movement
+        this.x += this.canvas.random(-0.1, 0.1);
+        this.y += this.canvas.random(-0.1, 0.1);
+        
+        // Wrap around edges
+        if (this.x < 0) this.x = this.canvas.width;
+        if (this.x > this.canvas.width) this.x = 0;
+        if (this.y < 0) this.y = this.canvas.height;
+        if (this.y > this.canvas.height) this.y = 0;
+    }
+    
+    draw() {
+        this.canvas.noStroke();
+        this.canvas.fill(this.color.r, this.color.g, this.color.b, this.opacity);
+        this.canvas.ellipse(this.x, this.y, this.size);
+    }
+}
+
+/**
  * UnderwaterTheme class that extends the base Theme
  * Integrated with state management system
  */
@@ -275,8 +326,10 @@ class UnderwaterTheme extends Theme {
         this.stateManager = stateManager;
         this.bubbles = [];
         this.fishes = [];
+        this.planktons = [];
         this.numBubbles = 100; // Default number of bubbles
         this.numFishes = 5;    // Default number of fish
+        this.numPlanktons = 50; // Default number of planktons
         this.bubbleSizeMultiplier = 1; // Default size multiplier
         this.fishSizeMultiplier = 1;   // Default fish size multiplier
         this.bubbleSpeedMultiplier = 1; // Default speed multiplier
@@ -345,6 +398,7 @@ class UnderwaterTheme extends Theme {
                         bubbleColor: '#DCEFFF',
                         bubbleCount: 100,
                         fishCount: 5,
+                        planktonCount: 50,
                         bubbleSize: 10,   // 1-40 scale like snowflakes
                         fishSize: 10,     // 1-20 scale
                         bubbleSpeed: 1,   // 0.5-3 scale
@@ -365,9 +419,10 @@ class UnderwaterTheme extends Theme {
         // Set bubble color
         this.setBubbleColor(config.bubbleColor);
         
-        // Set number of bubbles and fish
+        // Set number of bubbles, fish, and planktons
         this.setNumberOfBubbles(config.bubbleCount);
         this.setNumberOfFish(config.fishCount);
+        this.setNumberOfPlanktons(config.planktonCount);
         
         // Set size multipliers - convert from UI range to theme range
         const bubbleSizeMultiplier = config.bubbleSize / 10;
@@ -422,6 +477,23 @@ class UnderwaterTheme extends Theme {
         
         this.numFishes = num;
         this.updateFishes();
+        
+        // Resume animation if it was running before
+        if (previouslyRunning) {
+            this.isRunning = true;
+        }
+    }
+
+    setNumberOfPlanktons(num) {
+        const previouslyRunning = this.isRunning;
+        
+        // Stop animation temporarily if running
+        if (previouslyRunning) {
+            this.isRunning = false;
+        }
+        
+        this.numPlanktons = num;
+        this.updatePlanktons();
         
         // Resume animation if it was running before
         if (previouslyRunning) {
@@ -536,6 +608,21 @@ class UnderwaterTheme extends Theme {
         }
     }
 
+    updatePlanktons() {
+        // Adjust number of planktons
+        if (this.planktons.length < this.numPlanktons) {
+            // Add more planktons
+            const numToAdd = this.numPlanktons - this.planktons.length;
+            for (let i = 0; i < numToAdd; i++) {
+                const plankton = new Plankton(this.canvas);
+                this.planktons.push(plankton);
+            }
+        } else if (this.planktons.length > this.numPlanktons) {
+            // Remove excess planktons
+            this.planktons = this.planktons.slice(0, this.numPlanktons);
+        }
+    }
+
     setup() {
         // Create bubbles with initial distribution throughout canvas
         this.bubbles = [];
@@ -555,6 +642,13 @@ class UnderwaterTheme extends Theme {
             fish.setSpeedMultiplier(this.fishSpeedMultiplier);
             this.fishes.push(fish);
         }
+
+        // Create planktons
+        this.planktons = [];
+        for (let i = 0; i < this.numPlanktons; i++) {
+            const plankton = new Plankton(this.canvas);
+            this.planktons.push(plankton);
+        }
     }
 
     update() {
@@ -569,6 +663,11 @@ class UnderwaterTheme extends Theme {
         for (let fish of this.fishes) {
             fish.update();
         }
+
+        // Update all planktons
+        for (let plankton of this.planktons) {
+            plankton.update();
+        }
     }
 
     draw() {
@@ -580,6 +679,11 @@ class UnderwaterTheme extends Theme {
         // Draw subtle underwater gradient
         this.drawUnderwaterGradient();
         
+        // Draw all planktons
+        for (let plankton of this.planktons) {
+            plankton.draw();
+        }
+
         // Draw all fish
         for (let fish of this.fishes) {
             fish.draw();
@@ -604,39 +708,13 @@ class UnderwaterTheme extends Theme {
             this.canvas.fill(0, 0, 30, alpha);
             this.canvas.rect(0, y, this.canvas.width, layerHeight);
         }
-        
-        // Add some subtle light rays from top
-        this.drawLightRays();
-    }
-    
-    drawLightRays() {
-        // Draw subtle light rays
-        const numRays = 5;
-        const rayWidth = this.canvas.width / (numRays - 1);
-        
-        this.canvas.push();
-        this.canvas.blendMode(this.canvas.ADD);
-        
-        for (let i = 0; i < numRays; i++) {
-            const x = i * rayWidth;
-            const rayStrength = this.canvas.random(20, 40);
-            
-            this.canvas.noStroke();
-            this.canvas.fill(200, 220, 255, rayStrength);
-            this.canvas.triangle(
-                x, 0,
-                x - 100, this.canvas.height,
-                x + 100, this.canvas.height
-            );
-        }
-        
-        this.canvas.pop();
     }
 
     cleanup() {
         // Clean up resources
         this.bubbles = [];
         this.fishes = [];
+        this.planktons = [];
     }
     
     /**

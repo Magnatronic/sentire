@@ -366,8 +366,12 @@ class SnowflakesTheme extends Theme {
     }
 
     cleanup() {
-        // Nothing specific to clean up
+        // Clear the snowflakes array
         this.snowflakes = [];
+        
+        if (this.stateManager && this.stateManager.state.debug) {
+            console.log('SnowflakesTheme: Cleaned up resources');
+        }
     }
     
     /**
