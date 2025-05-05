@@ -152,33 +152,181 @@ class SnowflakeExplosion {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.size = size;
-        this.particleCount = particleCount;
+        this.size = size * 1.5; // Increased base size by 50%
+        this.particleCount = particleCount * 1.5; // Increased particle count by 50%
         this.particles = [];
-        this.lifespan = 100; // How long the explosion lasts
+        this.lifespan = 150; // Increased from 100 for longer-lasting explosions
         this.age = 0;
         this.active = true;
         
+        // Generate complementary colors for more beautiful effects
+        this.secondaryColor = this.generateComplementaryColor(color);
+        this.tertiaryColor = this.generateAccentColor(color);
+        
         // Create particles
         this.createParticles();
+
+        // Add an initial burst effect
+        this.createBurstEffect();
 
         // Debug info
         this._debugInfo = {
             createdAt: Date.now(),
             position: { x, y },
             color: { ...color },
-            size,
-            particleCount,
+            size: this.size,
+            particleCount: this.particleCount,
             particlesCreated: this.particles.length
         };
     }
     
+    /**
+     * Generate a complementary color to the main color
+     */
+    generateComplementaryColor(color) {
+        // Simple complementary color - invert RGB
+        return {
+            r: 255 - color.r,
+            g: 255 - color.g,
+            b: 255 - color.b
+        };
+    }
+    
+    /**
+     * Generate an accent color (shifted hue)
+     */
+    generateAccentColor(color) {
+        // Convert RGB to HSL, shift hue by 60 degrees, convert back
+        const [h, s, l] = this.rgbToHsl(color.r, color.g, color.b);
+        const newHue = (h + 60) % 360;
+        const [r, g, b] = this.hslToRgb(newHue, s, l);
+        return { r, g, b };
+    }
+    
+    /**
+     * Convert RGB to HSL color space
+     */
+    rgbToHsl(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+            h = s = 0; // achromatic
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            
+            h = Math.round(h * 60);
+        }
+        
+        s = Math.round(s * 100);
+        l = Math.round(l * 100);
+        
+        return [h, s, l];
+    }
+    
+    /**
+     * Convert HSL to RGB color space
+     */
+    hslToRgb(h, s, l) {
+        h /= 360;
+        s /= 100;
+        l /= 100;
+        
+        let r, g, b;
+        
+        if (s === 0) {
+            r = g = b = l; // achromatic
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        
+        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+    
+    /**
+     * Create a burst effect for the initial explosion
+     */
+    createBurstEffect() {
+        this.burstParticles = [];
+        
+        // Create rays emanating from the center
+        const rayCount = 12;
+        for (let i = 0; i < rayCount; i++) {
+            const angle = (i / rayCount) * this.canvas.TWO_PI;
+            const length = this.canvas.random(this.size * 5, this.size * 10);
+            
+            this.burstParticles.push({
+                angle: angle,
+                length: length,
+                width: this.canvas.random(2, 5) * this.size / 2,
+                alpha: 255,
+                color: this.canvas.random() < 0.5 ? this.secondaryColor : this.tertiaryColor
+            });
+        }
+        
+        // Create a central glow
+        this.centralGlow = {
+            size: this.size * 5,
+            alpha: 230,
+            color: this.color
+        };
+    }
+    
     createParticles() {
+        const particleTypes = ['snowflake', 'sparkle', 'dust', 'crystal']; 
+        
         for (let i = 0; i < this.particleCount; i++) {
             const angle = this.canvas.random(0, this.canvas.TWO_PI);
-            const speed = this.canvas.random(1, 5) * this.size;
-            const particleSize = this.canvas.random(3, 10) * this.size;
-            const lifespan = this.canvas.random(20, this.lifespan);
+            const speed = this.canvas.random(1, 7) * this.size; // Increased speed range
+            const particleSize = this.canvas.random(3, 15) * this.size; // Increased size range
+            const lifespan = this.canvas.random(this.lifespan * 0.5, this.lifespan * 1.2);
+            const isSparkling = this.canvas.random() > 0.5; // 50% chance of sparkling
+            
+            // Randomly choose a particle type
+            const type = particleTypes[Math.floor(this.canvas.random(0, particleTypes.length))];
+            
+            // Randomly choose a color from our palette
+            const colorChoice = this.canvas.random();
+            let particleColor;
+            
+            if (colorChoice < 0.4) {
+                particleColor = this.color;
+            } else if (colorChoice < 0.7) {
+                particleColor = this.secondaryColor;
+            } else {
+                particleColor = this.tertiaryColor;
+            }
+            
+            // Add some white particles for contrast
+            if (this.canvas.random() < 0.15) {
+                particleColor = { r: 255, g: 255, b: 255 };
+            }
             
             this.particles.push({
                 x: this.x,
@@ -188,9 +336,15 @@ class SnowflakeExplosion {
                 size: particleSize,
                 alpha: 255,
                 lifespan: lifespan,
-                sparkle: this.canvas.random() > 0.7, // Some particles will sparkle
+                sparkle: isSparkling,
+                type: type,
+                color: particleColor,
                 rotation: this.canvas.random(0, this.canvas.TWO_PI),
-                rotationSpeed: this.canvas.random(-0.1, 0.1)
+                rotationSpeed: this.canvas.random(-0.15, 0.15), // Increased rotation speed
+                trail: this.canvas.random() > 0.7, // Some particles have trailing effect
+                trailLength: this.canvas.random(3, 10),
+                bounceCount: Math.floor(this.canvas.random(0, 3)), // Some particles can bounce
+                trailHistory: []
             });
         }
     }
@@ -205,28 +359,86 @@ class SnowflakeExplosion {
             return;
         }
         
+        // Update central glow
+        if (this.centralGlow) {
+            this.centralGlow.size *= 0.97;
+            this.centralGlow.alpha = this.canvas.map(this.age, 0, this.lifespan * 0.5, 230, 0);
+            
+            if (this.centralGlow.alpha <= 0) {
+                this.centralGlow = null;
+            }
+        }
+        
+        // Update burst rays
+        if (this.burstParticles && this.age < this.lifespan * 0.3) {
+            for (let ray of this.burstParticles) {
+                ray.length *= 1.06;
+                ray.width *= 0.95;
+                ray.alpha = this.canvas.map(this.age, 0, this.lifespan * 0.3, 255, 0);
+            }
+        } else {
+            this.burstParticles = null;
+        }
+        
         // Update all particles
         for (let p of this.particles) {
+            // Store position for trail effect
+            if (p.trail) {
+                p.trailHistory.unshift({ x: p.x, y: p.y, alpha: p.alpha * 0.7 });
+                
+                // Limit trail length
+                if (p.trailHistory.length > p.trailLength) {
+                    p.trailHistory.pop();
+                }
+            }
+            
             // Move particle
             p.x += p.vx;
             p.y += p.vy;
             
-            // Apply some drag
-            p.vx *= 0.97;
-            p.vy *= 0.97;
+            // Apply varied drag based on particle type
+            const drag = p.type === 'dust' ? 0.96 : 0.98;
+            p.vx *= drag;
+            p.vy *= drag;
             
-            // Add slight gravity
-            p.vy += 0.05;
+            // Add varied gravity based on particle type
+            const gravity = p.type === 'crystal' ? 0.03 : 0.07;
+            p.vy += gravity;
+            
+            // Simulate simple bouncing for some particles
+            if (p.bounceCount > 0 && p.y > this.canvas.height - 10) {
+                p.vy = -p.vy * 0.6;
+                p.vx *= 0.8;
+                p.bounceCount--;
+                
+                // Create mini burst on bounce
+                if (p.size > 5) {
+                    p.size *= 0.8;
+                }
+            }
             
             // Update rotation
             p.rotation += p.rotationSpeed;
             
-            // Fade out based on particle's lifespan
-            p.alpha = this.canvas.map(p.lifespan - (this.age * 0.8), 0, p.lifespan, 0, 255);
+            // Fade out based on particle's lifespan and add easing
+            const lifeProgress = this.age / p.lifespan;
+            let alphaFactor;
             
-            // Make particle sparkle if it's a sparkling one
+            if (lifeProgress < 0.2) {
+                // Fade in quickly
+                alphaFactor = this.canvas.map(lifeProgress, 0, 0.2, 0, 1);
+            } else {
+                // Fade out with easing
+                alphaFactor = this.canvas.map(lifeProgress, 0.2, 1, 1, 0);
+                alphaFactor = 1 - (1 - alphaFactor) * (1 - alphaFactor); // Ease out quad
+            }
+            
+            p.alpha = 255 * alphaFactor;
+            
+            // Make particle sparkle with varied intensity
             if (p.sparkle) {
-                p.alpha *= 0.7 + 0.3 * Math.sin(this.age * 0.3 + p.rotation);
+                const sparkleIntensity = 0.3 + 0.7 * Math.sin(this.age * 0.3 + p.rotation);
+                p.alpha *= 0.7 + sparkleIntensity * 0.5;
             }
         }
 
@@ -246,36 +458,157 @@ class SnowflakeExplosion {
     draw() {
         if (!this.active) return;
         
-        // Draw all particles
         this.canvas.push();
         this.canvas.noStroke();
         
+        // Draw central glow first (if it exists)
+        if (this.centralGlow) {
+            const glowColor = this.centralGlow.color;
+            
+            // Create a radial gradient effect with multiple layers
+            for (let i = 5; i >= 0; i--) {
+                const alpha = this.centralGlow.alpha * (i / 5);
+                const size = this.centralGlow.size * (1 - i / 10);
+                
+                this.canvas.fill(glowColor.r, glowColor.g, glowColor.b, alpha);
+                this.canvas.ellipse(this.x, this.y, size);
+            }
+        }
+        
+        // Draw burst rays (if they exist)
+        if (this.burstParticles) {
+            for (let ray of this.burstParticles) {
+                this.canvas.push();
+                this.canvas.translate(this.x, this.y);
+                this.canvas.rotate(ray.angle);
+                
+                // Create gradient along the ray
+                const steps = 5;
+                for (let i = 0; i < steps; i++) {
+                    const t = i / (steps - 1);
+                    const alpha = ray.alpha * (1 - t);
+                    const length = ray.length * t;
+                    const width = ray.width * (1 - t * 0.5);
+                    
+                    this.canvas.fill(ray.color.r, ray.color.g, ray.color.b, alpha);
+                    this.canvas.ellipse(length, 0, width, width);
+                }
+                
+                this.canvas.pop();
+            }
+        }
+        
+        // Draw all particles
         for (let p of this.particles) {
             if (p.alpha <= 0) continue;
+            
+            // Draw trail first (behind particle)
+            if (p.trail && p.trailHistory.length > 0) {
+                for (let i = 0; i < p.trailHistory.length; i++) {
+                    const pos = p.trailHistory[i];
+                    const trailSize = p.size * (1 - i / p.trailHistory.length);
+                    const trailAlpha = pos.alpha * (1 - i / p.trailHistory.length);
+                    
+                    this.canvas.fill(p.color.r, p.color.g, p.color.b, trailAlpha);
+                    this.canvas.ellipse(pos.x, pos.y, trailSize * 0.6);
+                }
+            }
             
             this.canvas.push();
             this.canvas.translate(p.x, p.y);
             this.canvas.rotate(p.rotation);
             
             // Set fill color with alpha
-            this.canvas.fill(this.color.r, this.color.g, this.color.b, p.alpha);
+            this.canvas.fill(p.color.r, p.color.g, p.color.b, p.alpha);
             
-            // Draw snowflake particle
-            if (p.sparkle && this.age % 3 === 0) {
-                // For sparkling particles, draw a bright star sometimes
-                this.canvas.fill(255, 255, 255, p.alpha);
-                this.canvas.ellipse(0, 0, p.size * 1.2);
-            } else {
-                // Draw a simple snowflake shape
-                for (let i = 0; i < 3; i++) {
-                    this.canvas.push();
-                    this.canvas.rotate(this.canvas.PI * i / 3);
-                    this.canvas.ellipse(0, 0, p.size * 0.2, p.size);
-                    this.canvas.pop();
-                }
-                
-                // Draw center circle
-                this.canvas.ellipse(0, 0, p.size * 0.5);
+            // Draw different particle types
+            switch (p.type) {
+                case 'sparkle':
+                    // Draw a bright star
+                    if (p.sparkle) {
+                        this.canvas.fill(255, 255, 255, p.alpha);
+                    }
+                    
+                    // Star shape
+                    const outerRadius = p.size;
+                    const innerRadius = p.size * 0.4;
+                    const numPoints = 6;
+                    
+                    this.canvas.beginShape();
+                    for (let i = 0; i < numPoints * 2; i++) {
+                        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                        const angle = this.canvas.PI * i / numPoints;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        this.canvas.vertex(x, y);
+                    }
+                    this.canvas.endShape(this.canvas.CLOSE);
+                    
+                    // Add a glow effect
+                    this.canvas.fill(p.color.r, p.color.g, p.color.b, p.alpha * 0.3);
+                    this.canvas.ellipse(0, 0, p.size * 2);
+                    break;
+                    
+                case 'dust':
+                    // Simple circular dust particle
+                    this.canvas.ellipse(0, 0, p.size * 0.7);
+                    break;
+                    
+                case 'crystal':
+                    // Diamond shape crystal
+                    this.canvas.quad(
+                        0, -p.size / 2,
+                        p.size / 2, 0,
+                        0, p.size / 2,
+                        -p.size / 2, 0
+                    );
+                    // Add inner highlight
+                    this.canvas.fill(255, 255, 255, p.alpha * 0.5);
+                    this.canvas.quad(
+                        0, -p.size / 4,
+                        p.size / 4, 0,
+                        0, p.size / 4,
+                        -p.size / 4, 0
+                    );
+                    break;
+                    
+                case 'snowflake':
+                default:
+                    // Draw an enhanced snowflake shape
+                    // Draw main arms
+                    for (let i = 0; i < 6; i++) {
+                        this.canvas.push();
+                        this.canvas.rotate(this.canvas.PI * 2 * i / 6);
+                        
+                        // Main arm
+                        this.canvas.ellipse(0, 0, p.size * 0.2, p.size);
+                        
+                        // Add secondary branches
+                        if (p.size > 7) {
+                            this.canvas.push();
+                            this.canvas.translate(0, p.size * 0.3);
+                            this.canvas.rotate(this.canvas.PI / 3);
+                            this.canvas.ellipse(0, 0, p.size * 0.1, p.size * 0.3);
+                            this.canvas.pop();
+                            
+                            this.canvas.push();
+                            this.canvas.translate(0, -p.size * 0.3);
+                            this.canvas.rotate(-this.canvas.PI / 3);
+                            this.canvas.ellipse(0, 0, p.size * 0.1, p.size * 0.3);
+                            this.canvas.pop();
+                        }
+                        
+                        this.canvas.pop();
+                    }
+                    
+                    // Draw center circle with a highlight
+                    this.canvas.ellipse(0, 0, p.size * 0.5);
+                    
+                    if (p.sparkle) {
+                        this.canvas.fill(255, 255, 255, p.alpha * 0.7);
+                        this.canvas.ellipse(0, 0, p.size * 0.3);
+                    }
+                    break;
             }
             
             this.canvas.pop();
