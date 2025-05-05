@@ -278,15 +278,22 @@ class BubbleBurst {
         this.x = x;
         this.y = y;
         this.color = color;
-        this.size = size;
-        this.particleCount = particleCount;
+        this.size = size * 2; // Doubled base size for bigger explosions
+        this.particleCount = particleCount * 2; // Doubled particle count for denser explosions
         this.particles = [];
-        this.lifespan = 120; // How long the effect lasts
+        this.lifespan = 180; // Increased lifespan (was 120) for longer-lasting effect
         this.age = 0;
         this.active = true;
         
+        // Generate complementary colors for more vibrant effects
+        this.secondaryColor = this.generateComplementaryColor(color);
+        this.tertiaryColor = this.generateAccentColor(color);
+        
         // Create particles
         this.createParticles();
+        
+        // Create initial burst wave
+        this.createBurstWave();
         
         // Debug info
         this._debugInfo = {
@@ -306,31 +313,171 @@ class BubbleBurst {
         }
     }
     
+    /**
+     * Generate a complementary color to the main color
+     */
+    generateComplementaryColor(color) {
+        // Simple complementary color - invert RGB
+        return {
+            r: 255 - color.r,
+            g: 255 - color.g,
+            b: 255 - color.b
+        };
+    }
+    
+    /**
+     * Generate an accent color (shifted hue)
+     */
+    generateAccentColor(color) {
+        // Convert RGB to HSL, shift hue by 40 degrees, convert back
+        const [h, s, l] = this.rgbToHsl(color.r, color.g, color.b);
+        const newHue = (h + 40) % 360;
+        const [r, g, b] = this.hslToRgb(newHue, s, l);
+        return { r, g, b };
+    }
+    
+    /**
+     * Convert RGB to HSL color space
+     */
+    rgbToHsl(r, g, b) {
+        r /= 255;
+        g /= 255;
+        b /= 255;
+        
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        let h, s, l = (max + min) / 2;
+        
+        if (max === min) {
+            h = s = 0; // achromatic
+        } else {
+            const d = max - min;
+            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+            
+            switch (max) {
+                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                case g: h = (b - r) / d + 2; break;
+                case b: h = (r - g) / d + 4; break;
+            }
+            
+            h = Math.round(h * 60);
+        }
+        
+        s = Math.round(s * 100);
+        l = Math.round(l * 100);
+        
+        return [h, s, l];
+    }
+    
+    /**
+     * Convert HSL to RGB color space
+     */
+    hslToRgb(h, s, l) {
+        h /= 360;
+        s /= 100;
+        l /= 100;
+        
+        let r, g, b;
+        
+        if (s === 0) {
+            r = g = b = l; // achromatic
+        } else {
+            const hue2rgb = (p, q, t) => {
+                if (t < 0) t += 1;
+                if (t > 1) t -= 1;
+                if (t < 1/6) return p + (q - p) * 6 * t;
+                if (t < 1/2) return q;
+                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                return p;
+            };
+            
+            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+            const p = 2 * l - q;
+            
+            r = hue2rgb(p, q, h + 1/3);
+            g = hue2rgb(p, q, h);
+            b = hue2rgb(p, q, h - 1/3);
+        }
+        
+        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+    }
+    
+    /**
+     * Create an expanding ring wave for the initial burst
+     */
+    createBurstWave() {
+        this.burstWave = {
+            radius: 0,
+            maxRadius: this.size * 25,
+            alpha: 200,
+            speed: this.size * 2,
+            color: this.tertiaryColor
+        };
+        
+        // Create central glow
+        this.centralGlow = {
+            radius: this.size * 10,
+            alpha: 180,
+            color: this.color
+        };
+    }
+    
     createParticles() {
+        // Define various particle types for visual diversity
+        const particleTypes = ['bubble', 'sparkle', 'droplet', 'ring'];
+        
         for (let i = 0; i < this.particleCount; i++) {
             const angle = this.canvas.random(0, this.canvas.TWO_PI);
-            const speed = this.canvas.random(0.5, 3) * this.size;
-            const particleSize = this.canvas.random(3, 8) * this.size;
-            const lifespan = this.canvas.random(40, this.lifespan);
+            const speed = this.canvas.random(0.5, 4) * this.size; // Increased speed range
+            const particleSize = this.canvas.random(3, 12) * this.size; // Increased size range
+            const lifespan = this.canvas.random(80, this.lifespan * 1.2);
             
-            // Generate a small variation of the base color
+            // Randomly choose a particle type
+            const type = particleTypes[Math.floor(this.canvas.random(0, particleTypes.length))];
+            
+            // Randomly choose from our color palette for more colorful effect
+            const colorChoice = this.canvas.random();
+            let particleColor;
+            
+            if (colorChoice < 0.3) {
+                particleColor = this.color;
+            } else if (colorChoice < 0.6) {
+                particleColor = this.secondaryColor;
+            } else {
+                particleColor = this.tertiaryColor;
+            }
+            
+            // Add some white particles for contrast
+            if (this.canvas.random() < 0.15) {
+                particleColor = { r: 255, g: 255, b: 255 };
+            }
+            
+            // Generate a small random variation of the chosen color for subtle variety
             const colorVariation = 30;
-            const r = Math.min(255, Math.max(0, this.color.r + this.canvas.random(-colorVariation, colorVariation)));
-            const g = Math.min(255, Math.max(0, this.color.g + this.canvas.random(-colorVariation, colorVariation)));
-            const b = Math.min(255, Math.max(0, this.color.b + this.canvas.random(-colorVariation, colorVariation)));
+            const r = Math.min(255, Math.max(0, particleColor.r + this.canvas.random(-colorVariation, colorVariation)));
+            const g = Math.min(255, Math.max(0, particleColor.g + this.canvas.random(-colorVariation, colorVariation)));
+            const b = Math.min(255, Math.max(0, particleColor.b + this.canvas.random(-colorVariation, colorVariation)));
             
             this.particles.push({
                 x: this.x,
                 y: this.y,
                 vx: Math.cos(angle) * speed,
-                vy: Math.sin(angle) * speed - 0.5, // Slight upward bias
+                vy: Math.sin(angle) * speed - 0.8, // Stronger upward bias
                 size: particleSize,
+                baseSize: particleSize, // Store original size for scaling
                 color: { r, g, b },
                 alpha: 255,
                 lifespan: lifespan,
                 depth: this.canvas.random(0, 1),
                 rotation: this.canvas.random(0, this.canvas.TWO_PI),
-                rotationSpeed: this.canvas.random(-0.05, 0.05)
+                rotationSpeed: this.canvas.random(-0.08, 0.08),
+                type: type,
+                trail: this.canvas.random() > 0.6, // Some particles leave trails
+                trailHistory: [],
+                trailLength: Math.floor(this.canvas.random(3, 8)),
+                pulseFreq: this.canvas.random(0.05, 0.15), // For pulsing effects
+                glowing: this.canvas.random() > 0.7, // Some particles glow
+                bounceCount: Math.floor(this.canvas.random(0, 2)) // Some particles bounce
             });
         }
     }
@@ -356,27 +503,112 @@ class BubbleBurst {
             return;
         }
         
+        // Update burst wave if present
+        if (this.burstWave) {
+            this.burstWave.radius += this.burstWave.speed;
+            
+            // Fade out based on radius
+            const radiusRatio = this.burstWave.radius / this.burstWave.maxRadius;
+            this.burstWave.alpha = this.canvas.map(radiusRatio, 0, 1, 200, 0);
+            
+            // Remove burst wave when it's completely faded
+            if (this.burstWave.radius >= this.burstWave.maxRadius || this.burstWave.alpha <= 0) {
+                this.burstWave = null;
+            }
+        }
+        
+        // Update central glow if present
+        if (this.centralGlow) {
+            // Fade out the glow
+            this.centralGlow.alpha = this.canvas.map(this.age, 0, this.lifespan * 0.3, 180, 0);
+            
+            // Expand initially then contract
+            if (this.age < this.lifespan * 0.1) {
+                this.centralGlow.radius *= 1.03;
+            } else {
+                this.centralGlow.radius *= 0.97;
+            }
+            
+            // Remove when faded out
+            if (this.centralGlow.alpha <= 0) {
+                this.centralGlow = null;
+            }
+        }
+        
         // Update all particles
         for (let p of this.particles) {
+            // Store position for trail effect
+            if (p.trail) {
+                p.trailHistory.unshift({ x: p.x, y: p.y, alpha: p.alpha * 0.6 });
+                
+                // Limit trail length
+                if (p.trailHistory.length > p.trailLength) {
+                    p.trailHistory.pop();
+                }
+            }
+            
             // Move particle
             p.x += p.vx;
             p.y += p.vy;
             
-            // Apply upward movement (bubbles rise)
-            p.vy -= 0.02;
+            // Apply upward movement (bubbles rise faster for underwater feel)
+            p.vy -= 0.03;
             
-            // Apply some drag
-            p.vx *= 0.98;
-            p.vy *= 0.98;
+            // Apply drag based on particle type
+            const drag = p.type === 'droplet' ? 0.96 : 0.98;
+            p.vx *= drag;
+            p.vy *= drag;
             
             // Update rotation
             p.rotation += p.rotationSpeed;
             
-            // Make particle get smaller over time
-            const sizeRatio = 1 - (this.age / p.lifespan) * 0.5;
+            // Simulate bouncing for some particles if they hit the surface
+            if (p.bounceCount > 0 && p.y < this.canvas.height * 0.2) {
+                p.vy = -p.vy * 0.6;
+                p.vx *= 0.8;
+                p.bounceCount--;
+            }
             
-            // Fade out based on particle's lifespan
-            p.alpha = this.canvas.map(p.lifespan - this.age, 0, p.lifespan, 0, 255);
+            // Make particle size fluctuate for bubble effect
+            const lifespanRatio = 1 - (this.age / p.lifespan);
+            const pulseFactor = 1 + 0.1 * Math.sin(this.age * p.pulseFreq);
+            
+            // Scale based on type - bubbles grow slightly as they rise
+            switch(p.type) {
+                case 'bubble':
+                    p.size = p.baseSize * lifespanRatio * pulseFactor * (1 + (1 - (p.y / this.y)) * 0.2);
+                    break;
+                case 'sparkle':
+                    p.size = p.baseSize * lifespanRatio * (0.7 + 0.3 * Math.sin(this.age * p.pulseFreq * 2));
+                    break;
+                case 'ring':
+                    // Rings expand over time
+                    p.size = p.baseSize * (1 + (this.age / p.lifespan)) * pulseFactor;
+                    break;
+                default:
+                    p.size = p.baseSize * lifespanRatio * pulseFactor;
+            }
+            
+            // Fade out based on particle's lifespan with easing
+            const fadeProgress = this.age / p.lifespan;
+            let alphaFactor;
+            
+            if (fadeProgress < 0.2) {
+                // Fade in quickly
+                alphaFactor = this.canvas.map(fadeProgress, 0, 0.2, 0, 1);
+            } else {
+                // Fade out with easing
+                alphaFactor = this.canvas.map(fadeProgress, 0.2, 1, 1, 0);
+                alphaFactor = 1 - (1 - alphaFactor) * (1 - alphaFactor); // Ease out
+            }
+            
+            p.alpha = 255 * alphaFactor;
+            
+            // Add glowing effect for some particles
+            if (p.glowing) {
+                const glowPulse = 0.6 + 0.4 * Math.sin(this.age * p.pulseFreq * 1.5);
+                p.glowIntensity = alphaFactor * glowPulse;
+            }
         }
         
         // Add extra debug info at key lifecycle points
@@ -398,29 +630,143 @@ class BubbleBurst {
     draw() {
         if (!this.active) return;
         
-        // Draw all particles
         this.canvas.push();
         this.canvas.noStroke();
         
+        // Draw burst wave (expanding ring) if present
+        if (this.burstWave) {
+            const waveColor = this.burstWave.color;
+            this.canvas.noFill();
+            this.canvas.stroke(waveColor.r, waveColor.g, waveColor.b, this.burstWave.alpha);
+            this.canvas.strokeWeight(2 * this.size);
+            this.canvas.ellipse(this.x, this.y, this.burstWave.radius);
+            
+            // Add secondary shockwave with different color
+            this.canvas.stroke(this.color.r, this.color.g, this.color.b, this.burstWave.alpha * 0.6);
+            this.canvas.strokeWeight(1 * this.size);
+            this.canvas.ellipse(this.x, this.y, this.burstWave.radius * 0.8);
+        }
+        
+        // Draw central glow if present
+        if (this.centralGlow) {
+            const glowColor = this.centralGlow.color;
+            
+            // Create a radial gradient effect
+            for (let i = 5; i >= 0; i--) {
+                const radiusFactor = 1 - i * 0.15;
+                const alpha = this.centralGlow.alpha * (1 - i * 0.15);
+                
+                this.canvas.fill(glowColor.r, glowColor.g, glowColor.b, alpha);
+                this.canvas.ellipse(this.x, this.y, this.centralGlow.radius * radiusFactor);
+            }
+        }
+        
+        // Draw all particles
         for (let p of this.particles) {
             if (p.alpha <= 0) continue;
+            
+            // Draw trail first (behind particle)
+            if (p.trail && p.trailHistory.length > 0) {
+                for (let i = 0; i < p.trailHistory.length; i++) {
+                    const pos = p.trailHistory[i];
+                    const trailSize = p.size * (1 - i / p.trailHistory.length) * 0.7;
+                    const trailAlpha = pos.alpha * (1 - i / p.trailHistory.length);
+                    
+                    this.canvas.fill(p.color.r, p.color.g, p.color.b, trailAlpha);
+                    this.canvas.ellipse(pos.x, pos.y, trailSize);
+                }
+            }
             
             this.canvas.push();
             this.canvas.translate(p.x, p.y);
             this.canvas.rotate(p.rotation);
             
+            // Draw glow effect for glowing particles
+            if (p.glowing) {
+                this.canvas.fill(p.color.r, p.color.g, p.color.b, p.alpha * 0.3);
+                this.canvas.ellipse(0, 0, p.size * 1.8);
+                this.canvas.fill(p.color.r, p.color.g, p.color.b, p.alpha * 0.2);
+                this.canvas.ellipse(0, 0, p.size * 2.4);
+            }
+            
             // Set fill color with alpha
             this.canvas.fill(p.color.r, p.color.g, p.color.b, p.alpha);
             
-            // Draw bubble-like particle
-            this.canvas.ellipse(0, 0, p.size);
-            
-            // Add a highlight to make it look like a bubble
-            const highlightSize = p.size * 0.3;
-            const highlightOffset = p.size * 0.2;
-            
-            this.canvas.fill(255, 255, 255, p.alpha * 0.6);
-            this.canvas.ellipse(-highlightOffset, -highlightOffset, highlightSize);
+            // Draw different particle types
+            switch (p.type) {
+                case 'sparkle':
+                    // Star shape for sparkles
+                    const numPoints = 6;
+                    const outerRadius = p.size * 0.8;
+                    const innerRadius = p.size * 0.3;
+                    
+                    this.canvas.beginShape();
+                    for (let i = 0; i < numPoints * 2; i++) {
+                        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                        const angle = this.canvas.PI * i / numPoints;
+                        const x = Math.cos(angle) * radius;
+                        const y = Math.sin(angle) * radius;
+                        this.canvas.vertex(x, y);
+                    }
+                    this.canvas.endShape(this.canvas.CLOSE);
+                    
+                    // Add center highlight
+                    this.canvas.fill(255, 255, 255, p.alpha * 0.8);
+                    this.canvas.ellipse(0, 0, p.size * 0.2);
+                    break;
+                    
+                case 'droplet':
+                    // Teardrop shape for droplets
+                    this.canvas.beginShape();
+                    for (let i = 0; i < 20; i++) {
+                        const angle = (i / 20) * this.canvas.TWO_PI;
+                        const r = p.size * (0.6 + 0.4 * Math.sin(angle));
+                        const x = Math.cos(angle) * r;
+                        const y = Math.sin(angle) * r + p.size * 0.2;
+                        this.canvas.vertex(x, y);
+                    }
+                    this.canvas.endShape(this.canvas.CLOSE);
+                    
+                    // Add highlight
+                    this.canvas.fill(255, 255, 255, p.alpha * 0.6);
+                    this.canvas.ellipse(-p.size * 0.1, -p.size * 0.1, p.size * 0.3);
+                    break;
+                    
+                case 'ring':
+                    // Hollow ring
+                    this.canvas.noFill();
+                    this.canvas.strokeWeight(p.size * 0.1);
+                    this.canvas.stroke(p.color.r, p.color.g, p.color.b, p.alpha);
+                    this.canvas.ellipse(0, 0, p.size);
+                    
+                    // No fill to restore for next particles
+                    this.canvas.noStroke();
+                    this.canvas.fill(p.color.r, p.color.g, p.color.b, p.alpha);
+                    break;
+                    
+                case 'bubble':
+                default:
+                    // Draw enhanced bubble with depth and highlights
+                    this.canvas.ellipse(0, 0, p.size);
+                    
+                    // Add internal highlights to make it look like a bubble
+                    const highlightSize = p.size * 0.4;
+                    const highlightOffset = p.size * 0.2;
+                    
+                    this.canvas.fill(255, 255, 255, p.alpha * 0.7);
+                    this.canvas.ellipse(-highlightOffset, -highlightOffset, highlightSize);
+                    
+                    // Add smaller secondary highlight
+                    this.canvas.fill(255, 255, 255, p.alpha * 0.5);
+                    this.canvas.ellipse(highlightOffset * 0.8, highlightOffset * 0.8, highlightSize * 0.5);
+                    
+                    // Add subtle edge using stroke
+                    this.canvas.noFill();
+                    this.canvas.stroke(p.color.r * 0.7, p.color.g * 0.7, p.color.b * 0.9, p.alpha * 0.5);
+                    this.canvas.strokeWeight(p.size * 0.03);
+                    this.canvas.ellipse(0, 0, p.size * 0.95);
+                    break;
+            }
             
             this.canvas.pop();
         }
@@ -705,9 +1051,13 @@ class UnderwaterTheme extends Theme {
             particleCount: 15,          // Number of particles per burst
             sizeMultiplier: 1.0,        // Size multiplier for bursts
             colorMatchBubbles: true,    // Whether to match bubble color
-            maxBursts: 3,               // Maximum simultaneous bursts
-            triggerThreshold: 70        // Volume threshold to trigger (0-100)
+            maxBursts: 8,               // Maximum simultaneous bursts
+            triggerThreshold: 70,       // Volume threshold to trigger (0-100)
+            cooldownMs: 500             // Cooldown between triggers in milliseconds
         };
+        
+        // Track last burst time for cooldown
+        this.lastBurstTime = 0;
         
         // Audio manager reference will be set when available
         this.audioManager = null;
@@ -779,10 +1129,27 @@ class UnderwaterTheme extends Theme {
         if (data.volume < this.burstConfig.triggerThreshold) return;
         
         // Limit the number of simultaneous bursts
-        if (this.bubbleBursts.length >= this.burstConfig.maxBursts) return;
+        if (this.bubbleBursts.length >= this.burstConfig.maxBursts) {
+            if (this.stateManager && this.stateManager.state.debug) {
+                console.log(`UnderwaterTheme: Maximum burst limit (${this.burstConfig.maxBursts}) reached, skipping trigger`);
+            }
+            return;
+        }
+        
+        // Check cooldown period
+        const currentTime = Date.now();
+        if (this.burstConfig.cooldownMs > 0 && currentTime - this.lastBurstTime < this.burstConfig.cooldownMs) {
+            if (this.stateManager && this.stateManager.state.debug) {
+                console.log(`UnderwaterTheme: Cooldown period active, skipping trigger`);
+            }
+            return;
+        }
         
         // Create a bubble burst at a random position
         this.createRandomBubbleBurst(data.volume);
+        
+        // Update last burst time for cooldown
+        this.lastBurstTime = currentTime;
         
         if (this.stateManager && this.stateManager.state.debug) {
             console.log(`UnderwaterTheme: Created bubble burst from audio trigger (volume: ${data.volume.toFixed(1)})`);
