@@ -305,15 +305,21 @@ input[type="color"]::-webkit-color-swatch {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
     max-height: 500px;
     opacity: 1;
     overflow: hidden;
+    will-change: max-height, opacity;
+    -webkit-transition: max-height 0.3s ease, opacity 0.2s ease;
 }
 
 .audio-controls.collapsed .audio-controls-content {
     max-height: 0;
     opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    pointer-events: none;
 }
 
 /* Display Settings Panel */
@@ -353,15 +359,21 @@ input[type="color"]::-webkit-color-swatch {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
     max-height: 1000px;
     opacity: 1;
     overflow: hidden;
+    will-change: max-height, opacity;
+    -webkit-transition: max-height 0.3s ease, opacity 0.2s ease;
 }
 
 .display-settings.collapsed .display-settings-content {
     max-height: 0;
     opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    pointer-events: none;
 }
 
 .audio-toggle {
