@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Therapy Sensory App</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- p5.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Left sidebar for controls -->
+        <div class="sidebar">
+            <div class="theme-selector">
+                <label for="theme-select">Theme:</label>
+                <select id="theme-select">
+                    <option value="snowflakes">Snowflakes</option>
+                    <option value="underwater">Underwater</option>
+                    <!-- More themes will be added here later -->
+                </select>
+            </div>
+            
+            <div class="buttons">
+                <button id="toggle-animation-btn">Start</button>
+                <button id="fullscreen-btn">Full Screen</button>
+            </div>
+            
+            <!-- Audio Controls Section - Now collapsible -->
+            <div class="audio-controls">
+                <h3>Audio Settings</h3>
+                <div class="audio-controls-content">
+                    <div class="audio-toggle">
+                        <button id="microphone-toggle" class="toggle-btn">Enable Microphone</button>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="audio-threshold">Volume Threshold:</label>
+                        <div class="slider-with-value">
+                            <input type="range" id="audio-threshold" min="0" max="100" value="50" class="slider">
+                            <span class="slider-value" id="audio-threshold-value">50</span>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label for="audio-sensitivity">Sensitivity:</label>
+                        <div class="slider-with-value">
+                            <input type="range" id="audio-sensitivity" min="0.1" max="5" step="0.1" value="1.5" class="slider">
+                            <span class="slider-value" id="audio-sensitivity-value">1.5</span>
+                        </div>
+                    </div>
+                    
+                    <div class="audio-visualizer-container">
+                        <canvas id="audio-visualizer" width="230" height="80"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Display Settings Panel - Houses theme-specific controls -->
+            <div class="display-settings">
+                <h3>Display Settings</h3>
+                <div class="display-settings-content">
+                    <!-- Snowflakes Controls -->
+                    <div class="theme-controls snowflakes-controls">
+                        <div class="color-pickers">
+                            <div class="color-picker-container">
+                                <label for="background-color">Background Color:</label>
+                                <input type="color" id="background-color" value="#000A28">
+                            </div>
+                            
+                            <div class="color-picker-container">
+                                <label for="snowflake-color">Snowflake Color:</label>
+                                <input type="color" id="snowflake-color" value="#FFFFFF">
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="snowflake-count">Number of Snowflakes:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="snowflake-count" min="50" max="500" value="200" class="slider">
+                                <span class="slider-value" id="snowflake-count-value">200</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="snowflake-size">Snowflake Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="snowflake-size" min="1" max="40" value="10" class="slider">
+                                <span class="slider-value" id="snowflake-size-value">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="snowflake-speed">Fall Speed:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="snowflake-speed" min="0.5" max="5" value="1" step="0.1" class="slider">
+                                <span class="slider-value" id="snowflake-speed-value">1</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="wobble-intensity">Wobble Intensity:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="wobble-intensity" min="0" max="10" value="5" class="slider">
+                                <span class="slider-value" id="wobble-intensity-value">5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="wind-strength">Wind Strength:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="wind-strength" min="0" max="10" value="0" class="slider">
+                                <span class="slider-value" id="wind-strength-value">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="wind-direction">Wind Direction:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="wind-direction" min="0" max="360" value="0" class="slider">
+                                <span class="slider-value" id="wind-direction-value">0°</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Underwater Controls -->
+                    <div class="theme-controls underwater-controls" style="display: none;">
+                        <div class="color-pickers">
+                            <div class="color-picker-container">
+                                <label for="underwater-background-color">Background Color:</label>
+                                <input type="color" id="underwater-background-color" value="#003264">
+                            </div>
+                            
+                            <div class="color-picker-container">
+                                <label for="bubble-color">Bubble Color:</label>
+                                <input type="color" id="bubble-color" value="#DCEFFF">
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="bubble-count">Number of Bubbles:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="bubble-count" min="50" max="300" value="100" class="slider">
+                                <span class="slider-value" id="bubble-count-value">100</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="fish-count">Number of Fish:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="fish-count" min="0" max="40" value="5" class="slider">
+                                <span class="slider-value" id="fish-count-value">5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="bubble-size">Bubble Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="bubble-size" min="1" max="40" value="10" class="slider">
+                                <span class="slider-value" id="bubble-size-value">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="fish-size">Fish Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="fish-size" min="1" max="20" value="10" class="slider">
+                                <span class="slider-value" id="fish-size-value">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="bubble-speed">Bubble Speed:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="bubble-speed" min="0.5" max="3" value="1" step="0.1" class="slider">
+                                <span class="slider-value" id="bubble-speed-value">1</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="fish-speed">Fish Speed:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="fish-speed" min="0.5" max="3" value="1" step="0.1" class="slider">
+                                <span class="slider-value" id="fish-speed-value">1</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="underwater-wobble-intensity">Bubble Wobble:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="underwater-wobble-intensity" min="0" max="10" value="5" class="slider">
+                                <span class="slider-value" id="underwater-wobble-intensity-value">5</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="current-strength">Current Strength:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="current-strength" min="0" max="10" value="0" class="slider">
+                                <span class="slider-value" id="current-strength-value">0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="current-direction">Current Direction:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="current-direction" min="0" max="360" value="0" class="slider">
+                                <span class="slider-value" id="current-direction-value">0°</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="plankton-count">Plankton Density:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="plankton-count" min="0" max="200" value="50" class="slider">
+                                <span class="slider-value" id="plankton-count-value">50</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="plankton-size">Plankton Size:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="plankton-size" min="1" max="20" value="10" class="slider">
+                                <span class="slider-value" id="plankton-size-value">10</span>
+                            </div>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label for="plankton-depth">Depth Variation:</label>
+                            <div class="slider-with-value">
+                                <input type="range" id="plankton-depth" min="0" max="10" value="5" class="slider">
+                                <span class="slider-value" id="plankton-depth-value">5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content area for canvas -->
+        <div class="main-content">
+            <div id="canvas-container"></div>
+        </div>
+    </div>
+
+    <!-- Core App Files -->
+    <script src="js/themes/theme.js"></script>
+    <script src="js/themes/snowflake/snowflake.js"></script>
+    <script src="js/themes/underwater/underwater.js"></script>
+    <script src="js/themes/themeManager.js"></script>
+    <script src="js/sketch.js"></script>
+    
+    <!-- State Management System -->
+    <script src="js/state/StateManager.js"></script>
+    <script src="js/state/StateStorage.js"></script>
+    <script src="js/state/PresetManager.js"></script>
+    <script src="js/state/UIController.js"></script>
+    
+    <!-- Debug Panel - Comment out this line before merging to main branch (if ENABLE_DEBUG_PANEL is false) -->
+    <script src="js/state/DebugPanel.js"></script>
+    
+    <!-- Audio Detection System -->
+    <script src="js/audio/AudioManager.js"></script>
+    <script src="js/audio/AudioDebugPanel.js"></script>
+    <script src="js/audio/SidebarAudioPanel.js"></script>
+    
+    <script src="js/app.js"></script>
+    
+    <!-- Feature Flag Check Script -->
+    <script>
+        // This script ensures the DebugPanel CSS is only loaded when the debug panel is enabled
+        // It reads the ENABLE_DEBUG_PANEL value from app.js
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if debug panel is disabled (must be done after app.js loads)
+            if (typeof ENABLE_DEBUG_PANEL !== 'undefined' && !ENABLE_DEBUG_PANEL) {
+                // Find and remove the debug panel styles from CSS (optional)
+                const styleSheets = document.styleSheets;
+                for (let i = 0; i < styleSheets.length; i++) {
+                    try {
+                        const cssRules = styleSheets[i].cssRules;
+                        for (let j = 0; j < cssRules.length; j++) {
+                            if (cssRules[j].selectorText && cssRules[j].selectorText.includes('debug-panel')) {
+                                styleSheets[i].deleteRule(j);
+                                j--; // Adjust index after deletion
+                            }
+                        }
+                    } catch (e) {
+                        // Cross-origin stylesheet access errors - ignore
+                    }
+                }
+            }
+            
+            // Improved collapsible panel functionality with better touch support
+            const setupCollapsiblePanels = () => {
+                try {
+                    console.log('Setting up collapsible panels with enhanced touch support');
+                    
+                    // Audio Settings panel
+                    const audioPanel = document.querySelector('.audio-controls');
+                    const audioHeader = audioPanel.querySelector('h3');
+                    
+                    // Create a more robust touch/click handler
+                    const toggleAudioPanel = (e) => {
+                        console.log('Audio panel toggle triggered:', e.type);
+                        e.preventDefault(); // Prevent default for all event types
+                        e.stopPropagation(); // Stop propagation
+                        audioPanel.classList.toggle('collapsed');
+                        return false; // Ensure no further action
+                    };
+                    
+                    // Remove any existing event listeners (in case this runs multiple times)
+                    audioHeader.removeEventListener('click', toggleAudioPanel);
+                    audioHeader.removeEventListener('touchend', toggleAudioPanel);
+                    
+                    // Add both event listeners with proper options
+                    audioHeader.addEventListener('click', toggleAudioPanel);
+                    audioHeader.addEventListener('touchend', toggleAudioPanel, { passive: false });
+                    
+                    // Direct style manipulation as fallback
+                    audioHeader.style.cursor = 'pointer';
+                    audioHeader.style.webkitTapHighlightColor = 'rgba(0,0,0,0)';
+                    audioHeader.setAttribute('role', 'button');
+                    audioHeader.setAttribute('tabindex', '0');
+                    
+                    // Add keyboard support
+                    audioHeader.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            toggleAudioPanel(e);
+                        }
+                    });
+                    
+                    // Display Settings panel
+                    const displayPanel = document.querySelector('.display-settings');
+                    const displayHeader = displayPanel.querySelector('h3');
+                    
+                    // Create a more robust touch/click handler
+                    const toggleDisplayPanel = (e) => {
+                        console.log('Display panel toggle triggered:', e.type);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        displayPanel.classList.toggle('collapsed');
+                        return false;
+                    };
+                    
+                    // Remove any existing event listeners
+                    displayHeader.removeEventListener('click', toggleDisplayPanel);
+                    displayHeader.removeEventListener('touchend', toggleDisplayPanel);
+                    
+                    // Add both event listeners with proper options
+                    displayHeader.addEventListener('click', toggleDisplayPanel);
+                    displayHeader.addEventListener('touchend', toggleDisplayPanel, { passive: false });
+                    
+                    // Direct style manipulation as fallback
+                    displayHeader.style.cursor = 'pointer';
+                    displayHeader.style.webkitTapHighlightColor = 'rgba(0,0,0,0)';
+                    displayHeader.setAttribute('role', 'button');
+                    displayHeader.setAttribute('tabindex', '0');
+                    
+                    // Add keyboard support
+                    displayHeader.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            toggleDisplayPanel(e);
+                        }
+                    });
+                    
+                    // Add a class to make it obvious these are clickable
+                    audioHeader.classList.add('panel-header-clickable');
+                    displayHeader.classList.add('panel-header-clickable');
+                    
+                    // Auto-collapse panels on smaller screens
+                    const handleResponsiveLayout = () => {
+                        const isMobile = window.innerWidth <= 768;
+                        if (isMobile) {
+                            // Optional: Auto-collapse one panel on mobile to save space
+                            if (!audioPanel.classList.contains('collapsed') && 
+                                !displayPanel.classList.contains('collapsed')) {
+                                displayPanel.classList.add('collapsed');
+                            }
+                        }
+                    };
+                    
+                    // Call once on load
+                    handleResponsiveLayout();
+                    
+                    // Add resize event listener
+                    window.addEventListener('resize', handleResponsiveLayout);
+                    
+                    // Add visual feedback on mobile touch
+                    const addTouchFeedback = (element) => {
+                        element.addEventListener('touchstart', () => {
+                            element.classList.add('touch-active');
+                        }, { passive: true });
+                        
+                        element.addEventListener('touchend', () => {
+                            element.classList.remove('touch-active');
+                        }, { passive: true });
+                        
+                        element.addEventListener('touchcancel', () => {
+                            element.classList.remove('touch-active');
+                        }, { passive: true });
+                    };
+                    
+                    addTouchFeedback(audioHeader);
+                    addTouchFeedback(displayHeader);
+                    
+                    // Manually trigger a collapse/expand to make sure styles are applied properly
+                    if (!audioPanel.classList.contains('collapsed')) {
+                        audioPanel.classList.add('collapsed');
+                        setTimeout(() => {
+                            audioPanel.classList.remove('collapsed');
+                        }, 50);
+                    }
+                    
+                    if (!displayPanel.classList.contains('collapsed')) {
+                        displayPanel.classList.add('collapsed');
+                        setTimeout(() => {
+                            displayPanel.classList.remove('collapsed');
+                        }, 50);
+                    }
+                    
+                    console.log('Collapsible panels fully initialized');
+                    
+                } catch (error) {
+                    console.error('Error setting up collapsible panels:', error);
+                }
+            };
+            
+            // Run setup immediately AND after a short delay to ensure it works
+            setupCollapsiblePanels();
+            // Also try again after a delay in case DOM is still loading
+            setTimeout(setupCollapsiblePanels, 300);
+        });
+    </script>
+</body>
+</html>
