@@ -650,8 +650,12 @@ class SnowflakesTheme extends Theme {
             sizeMultiplier: 1.0,        // Size multiplier for explosions
             colorMatchSnowflakes: true, // Whether to match snowflake color
             maxExplosions: 5,           // Maximum simultaneous explosions
-            triggerThreshold: 70        // Volume threshold to trigger (0-100)
+            triggerThreshold: 70,       // Volume threshold to trigger (0-100)
+            cooldownMs: 500             // Cooldown between triggers in milliseconds
         };
+        
+        // Track last explosion time for cooldown
+        this.lastExplosionTime = 0;
         
         // Audio manager reference will be set when available
         this.audioManager = null;
@@ -751,8 +755,20 @@ class SnowflakesTheme extends Theme {
             return;
         }
         
+        // Check cooldown
+        const currentTime = Date.now();
+        if (currentTime - this.lastExplosionTime < this.explosionConfig.cooldownMs) {
+            if (this.stateManager && this.stateManager.state.debug) {
+                console.log(`SnowflakesTheme: Cooldown active, skipping explosion`);
+            }
+            return;
+        }
+        
         // Create a snowflake explosion at a random position
         this.createRandomExplosion(data.volume);
+        
+        // Update last explosion time
+        this.lastExplosionTime = currentTime;
         
         if (this.stateManager && this.stateManager.state.debug) {
             console.log(`SnowflakesTheme: Created explosion from audio trigger (volume: ${data.volume.toFixed(1)})`);
