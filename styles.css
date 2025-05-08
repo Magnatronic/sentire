@@ -31,6 +31,32 @@ body {
     z-index: 100;
 }
 
+/* Mobile sidebar toggle button */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(42, 92, 168, 0.8);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 20px;
+    z-index: 1000;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    align-items: center;
+    justify-content: center;
+}
+
+/* Style for when the sidebar is hidden on mobile */
+.sidebar-hidden {
+    transform: translateY(-100%);
+    max-height: 0;
+}
+
 /* Main content area containing canvas */
 .main-content {
     flex: 1;
@@ -213,21 +239,45 @@ slider::-moz-range-thumb {
         height: 50vh;
     }
     
-    /* Auto-collapse panels on smaller screens */
-    .audio-controls:not(:focus-within),
-    .display-settings:not(:focus-within) {
-        max-height: 50px;
+    .sidebar-toggle {
+        display: flex;
     }
     
-    .audio-controls:not(:focus-within) .audio-controls-content,
-    .display-settings:not(:focus-within) .display-settings-content {
-        max-height: 0;
-        opacity: 0;
+    /* Animation for sidebar */
+    .sidebar {
+        transition: transform 0.3s ease, max-height 0.3s ease;
+    }
+}
+
+/* Responsive grid layout for tablets and large phones in landscape */
+@media (min-width: 600px) and (max-width: 768px) {
+    /* Use a grid layout for sliders to make better use of horizontal space */
+    .display-settings-content .theme-controls {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
     }
     
-    .audio-controls:not(:focus-within) h3::after,
-    .display-settings:not(:focus-within) h3::after {
-        transform: rotate(-90deg);
+    /* Keep color pickers at full width */
+    .color-pickers {
+        grid-column: 1 / -1;
+    }
+    
+    /* Better arrangement of audio controls on landscape */
+    .audio-controls-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    /* Audio visualizer should span full width */
+    .audio-visualizer-container {
+        grid-column: 1 / -1;
+    }
+    
+    /* Audio toggle button at full width */
+    .audio-toggle {
+        grid-column: 1 / -1;
     }
 }
 
@@ -270,128 +320,71 @@ input[type="color"]::-webkit-color-swatch {
 
 /* Audio controls section */
 .audio-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
     background-color: rgba(40, 40, 50, 0.5);
     border-radius: 5px;
     padding: 15px;
     margin-bottom: 10px;
 }
 
+/* Completely reset the collapsible panels CSS */
+/* Audio Controls Section - Direct style approach */
 .audio-controls h3 {
-    margin: 0 0 10px 0;
+    margin: 0;
+    padding: 10px 0;
     font-size: 16px;
     color: #ffffff;
-    border-bottom: 1px solid #444;
-    padding-bottom: 8px;
     cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border-bottom: 1px solid #444;
 }
 
 .audio-controls h3::after {
     content: "▼";
-    font-size: 12px;
-    transition: transform 0.3s ease;
-    margin-left: 8px;
-    width: 20px;
-    height: 20px;
-    text-align: center;
-    line-height: 20px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
-    display: inline-block;
+    float: right;
+    transition: transform 0.3s;
 }
 
 .audio-controls.collapsed h3::after {
-    transform: rotate(-90deg);
+    content: "▶";
 }
 
-.audio-controls-content {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    transition: max-height 0.3s ease, opacity 0.2s ease;
-    max-height: 500px;
-    opacity: 1;
-    overflow: hidden;
-    will-change: max-height, opacity;
-    -webkit-transition: max-height 0.3s ease, opacity 0.2s ease;
+/* Explicit style for display settings */
+.display-settings h3 {
+    margin: 0;
+    padding: 10px 0;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+    border-bottom: 1px solid #444;
 }
 
-.audio-controls.collapsed .audio-controls-content {
-    max-height: 0;
-    opacity: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin-top: 0;
-    pointer-events: none;
+.display-settings h3::after {
+    content: "▼";
+    float: right;
+    transition: transform 0.3s;
+}
+
+.display-settings.collapsed h3::after {
+    content: "▶";
 }
 
 /* Display Settings Panel */
 .display-settings {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
     background-color: rgba(40, 40, 50, 0.5);
     border-radius: 5px;
     padding: 15px;
     margin-bottom: 10px;
 }
 
-.display-settings h3 {
-    margin: 0 0 10px 0;
-    font-size: 16px;
-    color: #ffffff;
-    border-bottom: 1px solid #444;
-    padding-bottom: 8px;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.display-settings h3::after {
-    content: "▼";
-    font-size: 12px;
-    transition: transform 0.3s ease;
-    margin-left: 8px;
-    width: 20px;
-    height: 20px;
-    text-align: center;
-    line-height: 20px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
-    display: inline-block;
-}
-
-.display-settings.collapsed h3::after {
-    transform: rotate(-90deg);
-}
-
 .display-settings-content {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    transition: max-height 0.3s ease, opacity 0.2s ease;
-    max-height: 1000px;
-    opacity: 1;
-    overflow: hidden;
-    will-change: max-height, opacity;
-    -webkit-transition: max-height 0.3s ease, opacity 0.2s ease;
+    padding-top: 15px;
+    display: block;
 }
 
 .display-settings.collapsed .display-settings-content {
-    max-height: 0;
-    opacity: 0;
-    padding-top: 0;
-    padding-bottom: 0;
-    margin-top: 0;
-    pointer-events: none;
+    display: none;
 }
 
+/* Audio toggle */
 .audio-toggle {
     display: flex;
     justify-content: center;
@@ -984,22 +977,6 @@ input[type="color"]::-webkit-color-swatch {
     border-radius: 4px;
 }
 
-/* Make the collapse/expand arrow more obvious */
-.audio-controls h3::after,
-.display-settings h3::after {
-    content: "▼";
-    font-size: 12px;
-    transition: transform 0.3s ease;
-    margin-left: 8px;
-    width: 20px;
-    height: 20px;
-    text-align: center;
-    line-height: 20px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 50%;
-    display: inline-block;
-}
-
 /* Enhanced mobile styles for panel headers */
 @media (max-width: 768px) {
     .audio-controls h3,
@@ -1021,5 +998,186 @@ input[type="color"]::-webkit-color-swatch {
         min-height: 44px;
         display: flex;
         align-items: center;
+    }
+}
+
+/* Touch-friendly controls for mobile devices */
+@media (max-width: 768px) {
+    /* Make slider thumbs larger for easier touch */
+    .slider::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .slider::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Increase height of the slider track for easier targeting */
+    .slider {
+        height: 12px;
+        margin: 10px 0;
+    }
+    
+    /* Larger text for readability */
+    .slider-container label {
+        font-size: 16px;
+    }
+    
+    .slider-value {
+        font-size: 16px;
+        min-width: 36px;
+    }
+    
+    /* Larger, more touch-friendly buttons */
+    button {
+        padding: 14px 10px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+    
+    /* More spacing between controls for touch */
+    .slider-container {
+        margin-bottom: 16px;
+    }
+    
+    /* Larger color pickers */
+    input[type="color"] {
+        height: 40px;
+    }
+    
+    /* Better spacing in the sidebar */
+    .sidebar {
+        padding: 16px;
+        gap: 16px;
+    }
+}
+
+/* Enhanced touch focus and active states */
+@media (max-width: 768px) {
+    /* Better focus indicators for improved accessibility */
+    button:focus,
+    input:focus,
+    select:focus {
+        outline: 3px solid rgba(74, 144, 226, 0.6);
+        outline-offset: 2px;
+    }
+    
+    /* Touch feedback for controls */
+    button:active,
+    .slider:active::-webkit-slider-thumb,
+    input[type="color"]:active {
+        transform: scale(0.96);
+        transition: transform 0.1s ease;
+    }
+    
+    /* Increase spacing in nested theme control sections */
+    .theme-controls {
+        padding: 10px;
+        margin-top: 5px;
+    }
+    
+    /* Add proper scroll momentum for mobile */
+    .sidebar {
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    
+    /* Increase tap target size for select dropdown */
+    select {
+        height: 44px;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+        padding: 10px;
+    }
+}
+
+/* Mobile-optimized collapsible panels */
+.panel-header {
+    position: relative;
+    padding: 12px 8px;
+    margin: 0;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0); /* Remove default mobile tap highlight */
+    touch-action: manipulation; /* Optimize for touch */
+}
+
+.panel-header::after {
+    content: "▼";
+    font-size: 12px;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+    line-height: 24px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.collapsed .panel-header::after {
+    content: "▶";
+}
+
+.panel-header:active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.panel-content {
+    max-height: 1000px;
+    overflow: hidden;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+
+.collapsed .panel-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Specific styling for audio controls panel */
+.audio-controls .panel-header {
+    background-color: rgba(60, 60, 80, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Specific styling for display settings panel */
+.display-settings .panel-header {
+    background-color: rgba(60, 60, 80, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Enhanced mobile styles */
+@media (max-width: 768px) {
+    .panel-header {
+        padding: 16px 12px;
+        font-size: 18px;
+        min-height: 54px; /* Ensure tap target is at least 44px high */
+    }
+    
+    .panel-header::after {
+        font-size: 14px;
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+    }
+    
+    /* Add visible affordance on mobile */
+    .panel-header {
+        background-color: rgba(70, 70, 100, 0.3);
+    }
+    
+    /* Stronger visual feedback for touch */
+    .panel-header:active {
+        background-color: rgba(255, 255, 255, 0.2);
     }
 }
