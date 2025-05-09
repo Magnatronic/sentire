@@ -1093,10 +1093,10 @@ input[type="color"]::-webkit-color-swatch {
     }
 }
 
-/* Mobile-optimized collapsible panels */
+/* Mobile-optimized collapsible panels - Revised for better scrolling */
 .panel-header {
     position: relative;
-    padding: 12px 8px;
+    padding: 10px 8px;
     margin: 0;
     font-size: 16px;
     color: #ffffff;
@@ -1106,17 +1106,17 @@ input[type="color"]::-webkit-color-swatch {
     justify-content: space-between;
     align-items: center;
     user-select: none;
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0); /* Remove default mobile tap highlight */
-    touch-action: manipulation; /* Optimize for touch */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    touch-action: manipulation;
 }
 
 .panel-header::after {
     content: "▼";
     font-size: 12px;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     text-align: center;
-    line-height: 24px;
+    line-height: 20px;
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 50%;
     transition: transform 0.2s ease;
@@ -1156,28 +1156,79 @@ input[type="color"]::-webkit-color-swatch {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Enhanced mobile styles */
+/* Revised mobile styles - more compact but still touch-friendly */
 @media (max-width: 768px) {
     .panel-header {
-        padding: 16px 12px;
-        font-size: 18px;
-        min-height: 54px; /* Ensure tap target is at least 44px high */
+        padding: 12px 10px;
+        font-size: 16px;
+        min-height: 44px; /* Standard minimum size for touch targets */
     }
     
     .panel-header::after {
+        font-size: 12px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+    }
+    
+    /* More compact controls for mobile */
+    .slider-container {
+        margin-bottom: 10px;
+    }
+    
+    .slider-container label {
         font-size: 14px;
-        width: 32px;
+        margin-bottom: 4px;
+    }
+    
+    /* More compact but still touch-friendly sliders */
+    .slider {
+        height: 10px;
+    }
+    
+    .slider::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+    }
+    
+    /* More compact buttons */
+    button {
+        padding: 10px 8px;
+        font-size: 14px;
+        min-height: 44px;
+    }
+    
+    /* More compact spacing */
+    .sidebar {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    /* More efficient use of space */
+    .theme-controls {
+        padding: 8px 4px;
+        margin-top: 4px;
+    }
+    
+    /* More compact color pickers */
+    input[type="color"] {
         height: 32px;
-        line-height: 32px;
     }
     
-    /* Add visible affordance on mobile */
-    .panel-header {
-        background-color: rgba(70, 70, 100, 0.3);
+    /* Better spacing between sections */
+    .audio-controls,
+    .display-settings {
+        margin-bottom: 8px;
+        padding: 10px;
     }
     
-    /* Stronger visual feedback for touch */
-    .panel-header:active {
-        background-color: rgba(255, 255, 255, 0.2);
+    /* More compact panel content */
+    .panel-content {
+        padding-top: 10px;
     }
 }
