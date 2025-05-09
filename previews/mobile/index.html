@@ -8,9 +8,9 @@
     <!-- p5.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.6.0/p5.min.js"></script>
     
-    <!-- Mobile-optimized collapsible panel implementation -->
+    <!-- Mobile-optimized collapsible panel implementation with scroll detection -->
     <script>
-        // Mobile-optimized collapsible panel implementation
+        // Mobile-optimized collapsible panel implementation with scroll detection
         document.addEventListener('DOMContentLoaded', function() {
             // Audio panel elements
             const audioPanel = document.querySelector('.audio-controls');
@@ -22,8 +22,19 @@
             const displayHeader = displayPanel.querySelector('.panel-header');
             const displayContent = displayPanel.querySelector('.panel-content');
             
-            // Enhanced toggle function for the audio panel
+            // Touch tracking variables
+            let touchStartY = 0;
+            let touchStartX = 0;
+            let isTouchMoving = false;
+            const TOUCH_MOVE_THRESHOLD = 10; // Pixels user must move to be considered a scroll
+            
+            // Enhanced toggle function for the audio panel with scroll detection
             function toggleAudioPanel(e) {
+                // Only proceed if this wasn't part of a scroll
+                if (isTouchMoving) {
+                    return;
+                }
+                
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -39,8 +50,13 @@
                 return false;
             }
             
-            // Enhanced toggle function for the display panel
+            // Enhanced toggle function for the display panel with scroll detection
             function toggleDisplayPanel(e) {
+                // Only proceed if this wasn't part of a scroll
+                if (isTouchMoving) {
+                    return;
+                }
+                
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -64,15 +80,45 @@
                     audioHeader.parentNode.replaceChild(audioClone, audioHeader);
                 }
                 
+                // Track touch start position to determine if user is scrolling
+                audioClone.addEventListener('touchstart', function(e) {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartX = e.touches[0].clientX;
+                    isTouchMoving = false;
+                    this.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                }, { passive: true });
+                
+                // Track touch movement to detect scrolling
+                audioClone.addEventListener('touchmove', function(e) {
+                    const touchY = e.touches[0].clientY;
+                    const touchX = e.touches[0].clientX;
+                    const diffY = Math.abs(touchY - touchStartY);
+                    const diffX = Math.abs(touchX - touchStartX);
+                    
+                    // If user moved finger more than threshold, they're scrolling not tapping
+                    if (diffY > TOUCH_MOVE_THRESHOLD || diffX > TOUCH_MOVE_THRESHOLD) {
+                        isTouchMoving = true;
+                        this.style.backgroundColor = ''; // Reset background when scrolling
+                    }
+                }, { passive: true });
+                
+                // Handle touch end - only toggle if not scrolling
+                audioClone.addEventListener('touchend', function(e) {
+                    this.style.backgroundColor = '';
+                    
+                    if (!isTouchMoving) {
+                        toggleAudioPanel(e);
+                    }
+                }, { passive: false });
+                
+                // Cancel touch - reset styles
+                audioClone.addEventListener('touchcancel', function() {
+                    this.style.backgroundColor = '';
+                    isTouchMoving = false;
+                }, { passive: true });
+                
                 // Add click event for desktop
                 audioClone.addEventListener('click', toggleAudioPanel);
-                
-                // Add touch events for mobile
-                audioClone.addEventListener('touchend', function(e) {
-                    // Prevent default to avoid double-firing with click
-                    e.preventDefault();
-                    toggleAudioPanel(e);
-                }, { passive: false });
                 
                 // Add keyboard support for accessibility
                 audioClone.addEventListener('keydown', function(e) {
@@ -80,19 +126,6 @@
                         toggleAudioPanel(e);
                     }
                 });
-                
-                // Add touch feedback
-                audioClone.addEventListener('touchstart', function() {
-                    this.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-                }, { passive: true });
-                
-                audioClone.addEventListener('touchend', function() {
-                    this.style.backgroundColor = '';
-                }, { passive: true });
-                
-                audioClone.addEventListener('touchcancel', function() {
-                    this.style.backgroundColor = '';
-                }, { passive: true });
             }
             
             // Set up touch-friendly event listeners for display panel
@@ -103,15 +136,45 @@
                     displayHeader.parentNode.replaceChild(displayClone, displayHeader);
                 }
                 
+                // Track touch start position to determine if user is scrolling
+                displayClone.addEventListener('touchstart', function(e) {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartX = e.touches[0].clientX;
+                    isTouchMoving = false;
+                    this.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                }, { passive: true });
+                
+                // Track touch movement to detect scrolling
+                displayClone.addEventListener('touchmove', function(e) {
+                    const touchY = e.touches[0].clientY;
+                    const touchX = e.touches[0].clientX;
+                    const diffY = Math.abs(touchY - touchStartY);
+                    const diffX = Math.abs(touchX - touchStartX);
+                    
+                    // If user moved finger more than threshold, they're scrolling not tapping
+                    if (diffY > TOUCH_MOVE_THRESHOLD || diffX > TOUCH_MOVE_THRESHOLD) {
+                        isTouchMoving = true;
+                        this.style.backgroundColor = ''; // Reset background when scrolling
+                    }
+                }, { passive: true });
+                
+                // Handle touch end - only toggle if not scrolling
+                displayClone.addEventListener('touchend', function(e) {
+                    this.style.backgroundColor = '';
+                    
+                    if (!isTouchMoving) {
+                        toggleDisplayPanel(e);
+                    }
+                }, { passive: false });
+                
+                // Cancel touch - reset styles
+                displayClone.addEventListener('touchcancel', function() {
+                    this.style.backgroundColor = '';
+                    isTouchMoving = false;
+                }, { passive: true });
+                
                 // Add click event for desktop
                 displayClone.addEventListener('click', toggleDisplayPanel);
-                
-                // Add touch events for mobile
-                displayClone.addEventListener('touchend', function(e) {
-                    // Prevent default to avoid double-firing with click
-                    e.preventDefault();
-                    toggleDisplayPanel(e);
-                }, { passive: false });
                 
                 // Add keyboard support for accessibility
                 displayClone.addEventListener('keydown', function(e) {
@@ -119,19 +182,6 @@
                         toggleDisplayPanel(e);
                     }
                 });
-                
-                // Add touch feedback
-                displayClone.addEventListener('touchstart', function() {
-                    this.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
-                }, { passive: true });
-                
-                displayClone.addEventListener('touchend', function() {
-                    this.style.backgroundColor = '';
-                }, { passive: true });
-                
-                displayClone.addEventListener('touchcancel', function() {
-                    this.style.backgroundColor = '';
-                }, { passive: true });
             }
             
             // Auto-collapse panels on smaller screens to optimize mobile space
@@ -151,7 +201,7 @@
             // Run on window resize
             window.addEventListener('resize', handleResponsiveLayout);
             
-            console.log('Mobile-optimized collapsible panels initialized');
+            console.log('Mobile-optimized collapsible panels initialized with scroll detection');
         });
     </script>
 </head>
