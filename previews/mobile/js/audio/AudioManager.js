@@ -504,6 +504,14 @@ class AudioManager {
     }
     
     /**
+     * Get the current volume threshold
+     * @returns {number} The current threshold value (0-100)
+     */
+    getThreshold() {
+        return this.volumeThreshold;
+    }
+    
+    /**
      * Set the sensitivity multiplier
      * @param {number} sensitivity The sensitivity multiplier
      */
