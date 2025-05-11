@@ -739,13 +739,8 @@ class SnowflakesTheme extends Theme {
             return;
         }
         
-        // Only trigger if the volume exceeds our specific threshold
-        if (data.volume < this.audioReactiveConfig.triggerThreshold) {
-            if (this.stateManager && this.stateManager.state.debug) {
-                console.log(`SnowflakesTheme: Volume ${data.volume.toFixed(1)} below threshold ${this.audioReactiveConfig.triggerThreshold}`);
-            }
-            return;
-        }
+        // The redundant volume threshold check has been removed
+        // AudioManager already verified the volume exceeded the threshold before triggering this event
         
         // Limit the number of simultaneous explosions
         if (this.explosions.length >= this.audioReactiveConfig.maxEffects) {
@@ -893,7 +888,7 @@ class SnowflakesTheme extends Theme {
         if (!this.audioReactiveConfig) {
             this.audioReactiveConfig = {
                 enabled: true,           // Whether audio-reactive effects are enabled
-                triggerThreshold: 35,    // Volume threshold to trigger effects (lower than default)
+                triggerThreshold: 35,    // Default threshold that will be overridden
                 maxEffects: 8,           // Maximum number of simultaneous effects
                 particleCount: 25,       // Particles per explosion
                 sizeMultiplier: 1.0      // Size multiplier for effects
@@ -906,9 +901,14 @@ class SnowflakesTheme extends Theme {
         this.audioReactiveConfig.maxEffects = this.explosionConfig.maxExplosions;
         this.audioReactiveConfig.enabled = this.explosionConfig.enabled;
         
-        // Use a lower trigger threshold than in the explosion config
-        // This makes it more responsive
-        this.audioReactiveConfig.triggerThreshold = 35;
+        // Get the threshold from the AudioManager if available instead of hardcoding
+        if (this.audioManager && typeof this.audioManager.getThreshold === 'function') {
+            this.audioReactiveConfig.triggerThreshold = this.audioManager.getThreshold();
+            
+            if (this.stateManager && this.stateManager.state.debug) {
+                console.log(`SnowflakesTheme: Using AudioManager threshold ${this.audioReactiveConfig.triggerThreshold}`);
+            }
+        }
         
         if (this.stateManager && this.stateManager.state.debug) {
             console.log('SnowflakesTheme: Audio reactive config initialized', this.audioReactiveConfig);
