@@ -7,10 +7,6 @@
 // Set to false before merging to main branch
 const ENABLE_DEBUG_PANEL = true;
 
-// Feature flag to control audio debug panel visibility
-// Set to false before merging to main branch
-const ENABLE_AUDIO_DEBUG_PANEL = true;
-
 /**
  * Creates a visual console for mobile debugging
  */
@@ -299,16 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ENABLE_DEBUG_PANEL) {
         window.sentireApp.debugPanel = debugPanel;
     }
-    
-    // Initialize Audio Debug Panel if enabled by feature flag
-    let audioDebugPanel;
-    if (ENABLE_AUDIO_DEBUG_PANEL) {
-        audioDebugPanel = new AudioDebugPanel(stateManager, audioManager);
-        // Add audioDebugPanel to the global object
-        window.sentireApp.audioDebugPanel = audioDebugPanel;
-    }
-    
-    // Initialize the Sidebar Audio Panel for all themes
+      // Initialize the Sidebar Audio Panel for all themes
     const sidebarAudioPanel = new SidebarAudioPanel(stateManager, audioManager);
     window.sentireApp.sidebarAudioPanel = sidebarAudioPanel;
     

@@ -135,6 +135,54 @@ const ColorUtils = {
     },
     
     /**
+     * Generate an array of triadic colors from the given RGB color
+     * @param {Object} color - RGB color object with r, g, b properties
+     * @returns {Array} Array of three RGB color objects (including the original)
+     */
+    getTriadicColors(color) {
+        // Convert to HSL, create 3 colors with hues 120° apart, then back to RGB
+        const [h, s, l] = this.rgbToHsl(color.r, color.g, color.b);
+        
+        // Original color
+        const color1 = { r: color.r, g: color.g, b: color.b };
+        
+        // Triadic colors (120° and 240° from original)
+        const [r2, g2, b2] = this.hslToRgb((h + 120) % 360, s, l);
+        const [r3, g3, b3] = this.hslToRgb((h + 240) % 360, s, l);
+        
+        const color2 = { r: r2, g: g2, b: b2 };
+        const color3 = { r: r3, g: g3, b: b3 };
+        
+        return [color1, color2, color3];
+    },
+    
+    /**
+     * Generate analogous colors from the given RGB color
+     * @param {Object} color - RGB color object with r, g, b properties
+     * @param {number} angle - Angle between colors in degrees, default 30
+     * @param {number} count - Number of colors to generate (including original), default 3
+     * @returns {Array} Array of RGB color objects
+     */
+    getAnalogousColors(color, angle = 30, count = 3) {
+        // Convert to HSL
+        const [h, s, l] = this.rgbToHsl(color.r, color.g, color.b);
+        const colors = [];
+        
+        // Calculate the starting hue offset
+        const startOffset = -((count - 1) / 2) * angle;
+        
+        // Generate colors around the original hue
+        for (let i = 0; i < count; i++) {
+            const hueOffset = startOffset + i * angle;
+            const newHue = (h + hueOffset + 360) % 360;
+            const [r, g, b] = this.hslToRgb(newHue, s, l);
+            colors.push({ r, g, b });
+        }
+        
+        return colors;
+    },
+    
+    /**
      * Generate a pastel version of the given RGB color
      * @param {Object} color - RGB color object with r, g, b properties
      * @param {number} pastelAmount - How pastel to make it (0-1), default 0.3
@@ -146,6 +194,99 @@ const ColorUtils = {
             g: Math.min(255, Math.round(color.g + (255 - color.g) * pastelAmount)),
             b: Math.min(255, Math.round(color.b + (255 - color.b) * pastelAmount))
         };
+    },
+    
+    /**
+     * Generate a gradient between two colors
+     * @param {Object} color1 - Starting RGB color object
+     * @param {Object} color2 - Ending RGB color object
+     * @param {number} steps - Number of color steps (including start and end)
+     * @returns {Array} Array of RGB color objects
+     */
+    getColorGradient(color1, color2, steps) {
+        const gradient = [];
+        
+        for (let i = 0; i < steps; i++) {
+            const ratio = i / (steps - 1);
+            
+            const r = Math.round(color1.r + (color2.r - color1.r) * ratio);
+            const g = Math.round(color1.g + (color2.g - color1.g) * ratio);
+            const b = Math.round(color1.b + (color2.b - color1.b) * ratio);
+            
+            gradient.push({ r, g, b });
+        }
+        
+        return gradient;
+    },
+    
+    /**
+     * Adjust the brightness of a color
+     * @param {Object} color - RGB color object
+     * @param {number} factor - Factor to adjust brightness (0-2, 1 is unchanged)
+     * @returns {Object} Adjusted RGB color
+     */
+    adjustBrightness(color, factor) {
+        return {
+            r: Math.min(255, Math.max(0, Math.round(color.r * factor))),
+            g: Math.min(255, Math.max(0, Math.round(color.g * factor))),
+            b: Math.min(255, Math.max(0, Math.round(color.b * factor)))
+        };
+    },
+    
+    /**
+     * Calculate contrast ratio between two colors (WCAG)
+     * @param {Object} color1 - First RGB color
+     * @param {Object} color2 - Second RGB color
+     * @returns {number} Contrast ratio (1 to 21)
+     */
+    getContrastRatio(color1, color2) {
+        // Calculate relative luminance for both colors
+        const l1 = this.getRelativeLuminance(color1);
+        const l2 = this.getRelativeLuminance(color2);
+        
+        // Return contrast ratio
+        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    },
+    
+    /**
+     * Calculate relative luminance of an RGB color (WCAG)
+     * @param {Object} color - RGB color object
+     * @returns {number} Relative luminance value (0 to 1)
+     */
+    getRelativeLuminance(color) {
+        // Convert RGB to sRGB
+        const rsrgb = color.r / 255;
+        const gsrgb = color.g / 255;
+        const bsrgb = color.b / 255;
+        
+        // Calculate RGB values for luminance
+        const r = rsrgb <= 0.03928 ? rsrgb / 12.92 : Math.pow((rsrgb + 0.055) / 1.055, 2.4);
+        const g = gsrgb <= 0.03928 ? gsrgb / 12.92 : Math.pow((gsrgb + 0.055) / 1.055, 2.4);
+        const b = bsrgb <= 0.03928 ? bsrgb / 12.92 : Math.pow((bsrgb + 0.055) / 1.055, 2.4);
+        
+        // Calculate luminance using WCAG formula
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    },
+    
+    /**
+     * Convert RGB color to hex string
+     * @param {Object|Array} color - RGB color object or array [r, g, b]
+     * @returns {string} Hex color string (e.g. "#FFFFFF")
+     */
+    rgbToHex(color) {
+        let r, g, b;
+        
+        if (Array.isArray(color)) {
+            [r, g, b] = color;
+        } else {
+            r = color.r;
+            g = color.g;
+            b = color.b;
+        }
+        
+        return "#" + 
+            ((1 << 24) + (r << 16) + (g << 8) + b)
+            .toString(16).slice(1);
     }
 };
 
