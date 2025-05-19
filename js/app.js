@@ -3,9 +3,7 @@
  * This file initializes the application when the document loads
  */
 
-// Feature flag to control debug panel visibility
-// Set to false before merging to main branch
-const ENABLE_DEBUG_PANEL = true;
+// Debug panel has been removed
 
 /**
  * Creates a visual console for mobile debugging
@@ -266,15 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Register underwater theme
     themeManager.registerTheme('underwater', new UnderwaterTheme(stateManager));
-    
-    // Initialize Debug Panel but keep it hidden (only if enabled by feature flag)
-    let debugPanel;
-    if (ENABLE_DEBUG_PANEL) {
-        debugPanel = new DebugPanel(stateManager);
-        debugPanel.init();
-    }
-    
-    // Initialize Audio Manager for sound detection
+      // Initialize Audio Manager for sound detection
     const audioManager = new AudioManager(stateManager);
     
     // Do not automatically initialize the audio system
@@ -290,11 +280,6 @@ document.addEventListener('DOMContentLoaded', () => {
         themeManager,
         audioManager
     };
-    
-    // Add debugPanel to the global object only if enabled
-    if (ENABLE_DEBUG_PANEL) {
-        window.sentireApp.debugPanel = debugPanel;
-    }
       // Initialize the Sidebar Audio Panel for all themes
     const sidebarAudioPanel = new SidebarAudioPanel(stateManager, audioManager);
     window.sentireApp.sidebarAudioPanel = sidebarAudioPanel;
