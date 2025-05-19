@@ -1,176 +1,182 @@
 /**
- * Color utility functions for the Snowflakes Theme
+ * Snowflakes Theme
+ * 
+ * This theme creates a snowfall effect with interactive snowflakes.
+ * Uses shared ColorUtils from utils/colorUtils.js
  */
-// Color conversion utilities
-const ColorUtils = {
-    /**
-     * Convert hex color string to RGB object
-     * @param {string} hexColor - Hex color string (e.g. "#FFFFFF")
-     * @returns {Object} RGB object with r, g, b properties
-     */
-    hexToRgb(hexColor) {
-        const r = parseInt(hexColor.substr(1, 2), 16);
-        const g = parseInt(hexColor.substr(3, 2), 16);
-        const b = parseInt(hexColor.substr(5, 2), 16);
-        return { r, g, b };
-    },
-    
-    /**
-     * Convert RGB to HSL color space
-     * @param {number} r - Red component (0-255)
-     * @param {number} g - Green component (0-255)
-     * @param {number} b - Blue component (0-255)
-     * @returns {Array} HSL values as [h, s, l]
-     */
-    rgbToHsl(r, g, b) {
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        let h, s, l = (max + min) / 2;
-        
-        if (max === min) {
-            h = s = 0; // achromatic
-        } else {
-            const d = max - min;
-            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-            
-            switch (max) {
-                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                case g: h = (b - r) / d + 2; break;
-                case b: h = (r - g) / d + 4; break;
-            }
-            
-            h = Math.round(h * 60);
-        }
-        
-        s = Math.round(s * 100);
-        l = Math.round(l * 100);
-        
-        return [h, s, l];
-    },
-    
-    /**
-     * Convert HSL to RGB color space
-     * @param {number} h - Hue (0-360)
-     * @param {number} s - Saturation (0-100)
-     * @param {number} l - Lightness (0-100)
-     * @returns {Array} RGB values as [r, g, b]
-     */
-    hslToRgb(h, s, l) {
-        h /= 360;
-        s /= 100;
-        l /= 100;
-        
-        let r, g, b;
-        
-        if (s === 0) {
-            r = g = b = l; // achromatic
-        } else {
-            const hue2rgb = (p, q, t) => {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1/6) return p + (q - p) * 6 * t;
-                if (t < 1/2) return q;
-                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                return p;
-            };
-            
-            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            const p = 2 * l - q;
-            
-            r = hue2rgb(p, q, h + 1/3);
-            g = hue2rgb(p, q, h);
-            b = hue2rgb(p, q, h - 1/3);
-        }
-        
-        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-    },
-    
-    /**
-     * Convert HSB color to RGB
-     * @param {number} h - Hue (0-360)
-     * @param {number} s - Saturation (0-100)
-     * @param {number} b - Brightness (0-100)
-     * @returns {Array} RGB values as [r, g, b]
-     */
-    hsbToRgb(h, s, b) {
-        s /= 100;
-        b /= 100;
-        
-        const k = (n) => (n + h / 60) % 6;
-        const f = (n) => b * (1 - s * Math.max(0, Math.min(k(n), 4 - k(n), 1)));
-        
-        return [
-            Math.round(255 * f(5)),
-            Math.round(255 * f(3)),
-            Math.round(255 * f(1))
-        ];
-    }
-};
+// Check if ColorUtils is available
+if (!window.ColorUtils) {
+    console.error('ColorUtils not found! Make sure utils/colorUtils.js is loaded before snowflake.js');
+}
 
 /**
  * Constants for the Snowflakes theme
+ * 
+ * This object contains all the configurable parameters for the theme.
+ * Adjusting these values will change the behavior and appearance of the theme.
+ * When creating your own theme, use these constants as a template and adjust
+ * for your specific visual effects.
  */
 const CONSTANTS = {
-    // Snowflake physics
+    // ==========================================
+    // Snowflake Physics - Controls basic snowflake behavior
+    // ==========================================
+    
+    /** Minimum base size for snowflakes (pixels) */
     BASE_SIZE_MIN: 3,
+    
+    /** Maximum base size for snowflakes (pixels) */
     BASE_SIZE_MAX: 10,
+    
+    /** Minimum amount of side-to-side wobble (pixels) */
     WOBBLE_AMOUNT_MIN: 0.8,
+    
+    /** Maximum amount of side-to-side wobble (pixels) */
     WOBBLE_AMOUNT_MAX: 2.0,
+    
+    /** Minimum wobble speed (radians per frame) */
     WOBBLE_SPEED_MIN: 0.01,
+    
+    /** Maximum wobble speed (radians per frame) */
     WOBBLE_SPEED_MAX: 0.05,
+    
+    /** Minimum rotation speed (radians per frame) - negative for clockwise */
     ROTATION_SPEED_MIN: -0.02,
+    
+    /** Maximum rotation speed (radians per frame) - positive for counter-clockwise */
     ROTATION_SPEED_MAX: 0.02,
     
-    // Explosion effects
+    // ==========================================
+    // Explosion Effects - Controls audio-reactive explosions
+    // ==========================================
+    
+    /** Multiplier for explosion size relative to the base size */
     EXPLOSION_SIZE_MULTIPLIER: 1.5,
+    
+    /** Multiplier for number of particles in explosions */
     EXPLOSION_PARTICLE_MULTIPLIER: 1.5,
+    
+    /** Total lifespan of explosions in frames */
     EXPLOSION_LIFESPAN: 150,
+    
+    /** Initial alpha (opacity) of the central glow (0-255) */
     CENTRAL_GLOW_INITIAL_ALPHA: 230,
+    
+    /** Rate at which the central glow fades (0-1) - lower values fade faster */
     CENTRAL_GLOW_DECAY: 0.97,
+    
+    /** Number of rays in the burst effect */
     BURST_RAY_COUNT: 12,
-    BURST_RAY_LENGTH_MIN: 5,  // Multiplied by size
-    BURST_RAY_LENGTH_MAX: 10, // Multiplied by size
+    
+    /** Minimum length of burst rays (multiplied by snowflake size) */
+    BURST_RAY_LENGTH_MIN: 5,
+    
+    /** Maximum length of burst rays (multiplied by snowflake size) */
+    BURST_RAY_LENGTH_MAX: 10,
+    
+    /** Growth rate of burst rays - values > 1 make rays grow over time */
     BURST_RAY_GROWTH: 1.06,
+    
+    /** Rate at which burst ray width decreases - lower values thin out faster */
     BURST_RAY_WIDTH_DECAY: 0.95,
+    
+    /** Ratio of explosion lifespan during which burst rays are visible */
     BURST_LIFESPAN_RATIO: 0.3,
     
-    // Particle physics
+    // ==========================================
+    // Particle Physics - Controls particle behavior in explosions
+    // ==========================================
+    
+    /** Minimum speed of explosion particles */
     PARTICLE_SPEED_MIN: 1,
+    
+    /** Maximum speed of explosion particles */
     PARTICLE_SPEED_MAX: 7,
+    
+    /** Minimum size of explosion particles */
     PARTICLE_SIZE_MIN: 3,
+    
+    /** Maximum size of explosion particles */
     PARTICLE_SIZE_MAX: 15,
+    
+    /** Minimum lifespan ratio for particles (relative to explosion lifespan) */
     PARTICLE_LIFESPAN_MIN_RATIO: 0.5,
+    
+    /** Maximum lifespan ratio for particles (relative to explosion lifespan) */
     PARTICLE_LIFESPAN_MAX_RATIO: 1.2,
+    
+    /** Air drag coefficient for dust-type particles (0-1) - lower values = more drag */
     PARTICLE_DRAG_DUST: 0.96,
+    
+    /** Default air drag coefficient for particles (0-1) - lower values = more drag */
     PARTICLE_DRAG_DEFAULT: 0.98,
+    
+    /** Gravity strength for crystal-type particles - higher values fall faster */
     PARTICLE_GRAVITY_CRYSTAL: 0.03,
+    
+    /** Default gravity strength for particles - higher values fall faster */
     PARTICLE_GRAVITY_DEFAULT: 0.07,
+    
+    /** Bounce dampening factor when particles hit surfaces (0-1) */
     PARTICLE_BOUNCE_DAMPEN: 0.6,
+    
+    /** Horizontal friction when particles bounce (0-1) */
     PARTICLE_BOUNCE_FRICTION: 0.8,
+    
+    /** Size reduction factor when particles bounce (0-1) - lower values shrink more */
     PARTICLE_SIZE_DECAY: 0.8,
     
-    // Audio reaction
+    // ==========================================
+    // Audio Reaction - Controls how the theme responds to audio
+    // ==========================================
+    
+    /** Base factor for explosion size relative to volume */
     VOLUME_BASE_SIZE_FACTOR: 0.7,
+    
+    /** Additional size factor based on volume level */
     VOLUME_ADDITIONAL_SIZE_FACTOR: 0.6,
+    
+    /** Base factor for particle count relative to volume */
     VOLUME_BASE_PARTICLE_FACTOR: 0.8,
+    
+    /** Additional particle count factor based on volume level */
     VOLUME_ADDITIONAL_PARTICLE_FACTOR: 0.5,
+    
+    /** Padding ratio to keep explosions away from screen edges (0-1) */
     POSITION_PADDING_RATIO: 0.1,
     
-    // Drawing constants
+    // ==========================================
+    // Visual Effects - Controls appearance details
+    // ==========================================
+    
+    /** Alpha ratio for particle trails (0-1) */
     TRAIL_ALPHA_RATIO: 0.7,
+    
+    /** Minimum sparkle intensity for particles (0-1) */
     SPARKLE_INTENSITY_MIN: 0.3,
+    
+    /** Maximum sparkle intensity for particles (0-1) */
     SPARKLE_INTENSITY_MAX: 0.7,
+    
+    /** Frequency of sparkle effects (0-1) - higher values = more sparkles */
     SPARKLE_FREQUENCY: 0.3,
+    
+    /** Chance of creating pure white particles (0-1) */
     WHITE_PARTICLE_CHANCE: 0.15,
+    
+    /** Chance of particles having trails (0-1) */
     TRAIL_PARTICLE_CHANCE: 0.7
 };
 
 /**
  * A single Snowflake object
+ * 
+ * This class represents and manages an individual snowflake in the scene.
+ * Each snowflake has its own physical properties (size, speed, wobble),
+ * responds to wind forces, and can be reset when it falls off-screen.
+ * 
+ * When creating your own theme, you can use this as a template for
+ * defining visual elements with physics-based movement.
  */
 class Snowflake {
     constructor(canvas, initialDistribution = false, sizeMultiplier = 1) {
@@ -284,6 +290,23 @@ class Snowflake {
 
 /**
  * Particle class for explosion effects
+ * 
+ * This class handles the behavior and rendering of individual particles
+ * in explosion effects. It supports multiple particle types with different
+ * physical properties and appearances:
+ * - snowflake: Six-pointed snowflake shape with rotation
+ * - dust: Simple circular particles with air drag
+ * - sparkle: Particles that sparkle/flicker with varying opacity
+ * - crystal: Diamond-shaped particles with lower gravity
+ * 
+ * The class demonstrates physics-based animation including:
+ * - Velocity and direction
+ * - Gravity and air drag simulation
+ * - Bouncing off the bottom of the screen
+ * - Trail effects
+ * 
+ * When creating your own theme, this provides a template for implementing
+ * various particle effects with different visual styles and behaviors.
  */
 class ExplosionParticle {
     /**
@@ -555,6 +578,21 @@ class ExplosionParticle {
 /**
  * Represents a single ray in the burst effect
  */
+/**
+ * BurstRay class for creating radial rays in explosion effects
+ * 
+ * This class handles the rendering and animation of ray-like lines
+ * that emanate from the center of an explosion. These rays create
+ * a starburst effect and help convey energy in the visual effect.
+ * 
+ * The rays have animated properties including:
+ * - Growth over time
+ * - Width decay (thinning)
+ * - Alpha/opacity fading
+ * 
+ * When creating your own theme, this provides a template for implementing
+ * simple line-based effects that emanate from a central point.
+ */
 class BurstRay {
     /**
      * Create a new burst ray
@@ -619,6 +657,20 @@ class BurstRay {
 /**
  * Central glow effect for explosions
  */
+/**
+ * CentralGlow class for creating a glowing core in explosion effects
+ * 
+ * This class handles the rendering and animation of a circular glow
+ * that appears at the center of an explosion. It creates a soft,
+ * radiant effect that helps convey energy and light.
+ * 
+ * The glow has animated properties including:
+ * - Alpha/opacity decay over time
+ * - Size that follows a curve based on the explosion lifecycle
+ * 
+ * When creating your own theme, this provides a template for implementing
+ * simple radial glow effects that can enhance visual impact.
+ */
 class CentralGlow {
     /**
      * Create a new central glow
@@ -675,16 +727,102 @@ class CentralGlow {
 
 /**
  * Explosion effect class for snowflake theme
+ * 
+ * This class manages the creation and lifecycle of audio-reactive explosion effects.
+ * It orchestrates multiple components to create a visually rich explosion:
+ * - Spawns particles of various types (snowflake, dust, sparkle, crystal)
+ * - Creates burst rays emanating from the center
+ * - Manages a central glow effect
+ * - Handles color variations using complementary and accent colors
+ * 
+ * When creating your own theme, you can use this as a template for
+ * implementing complex visual effects composed of multiple components.
+ * 
+ * This implementation uses object pooling for better performance by
+ * reusing particle objects instead of creating new ones each time.
  */
 class SnowflakeExplosion {
+    // Static pool initialization - done once when the class is defined
+    static initPools(canvas) {
+        if (SnowflakeExplosion._poolsInitialized) return;
+        
+        // Create particle pool
+        SnowflakeExplosion.particlePool = ObjectPool.create(
+            // Create function
+            () => new ExplosionParticle(
+                canvas, 0, 0, 0, 0, 0, 0, 
+                { r: 0, g: 0, b: 0 }, 'dust'
+            ),
+            // Reset function
+            (particle, canvas, x, y, angle, speed, size, lifespan, color, type) => {
+                particle.canvas = canvas;
+                particle.x = x;
+                particle.y = y;
+                particle.angle = angle;
+                particle.speed = speed;
+                particle.size = size;
+                particle.maxLifespan = lifespan;
+                particle.lifespan = lifespan;
+                particle.color = color;
+                particle.type = type;
+                
+                // Reset derived properties
+                particle.vx = Math.cos(angle) * speed;
+                particle.vy = Math.sin(angle) * speed;
+                particle.gravity = type === 'crystal' ? 
+                    CONSTANTS.PARTICLE_GRAVITY_CRYSTAL : 
+                    CONSTANTS.PARTICLE_GRAVITY_DEFAULT;
+                particle.drag = type === 'dust' ? 
+                    CONSTANTS.PARTICLE_DRAG_DUST : 
+                    CONSTANTS.PARTICLE_DRAG_DEFAULT;
+                particle.alpha = 255;
+                particle.sparkle = 0;
+                particle.canBounce = type === 'crystal' || type === 'snowflake';
+                particle.hasBounced = false;
+                particle.hasTrail = Math.random() < CONSTANTS.TRAIL_PARTICLE_CHANCE;
+                particle.trailPositions = [];
+                
+                return particle;
+            },
+            50,  // Initial pool size
+            200   // Max pool size
+        );
+        
+        // Create ray pool
+        SnowflakeExplosion.rayPool = ObjectPool.create(
+            // Create function
+            () => new BurstRay(
+                canvas, 0, 0, 0, { r: 0, g: 0, b: 0 }
+            ),
+            // Reset function
+            (ray, canvas, angle, length, width, color) => {
+                ray.canvas = canvas;
+                ray.angle = angle;
+                ray.length = length;
+                ray.width = width;
+                ray.color = color;
+                ray.alpha = 255;
+                return ray;
+            },
+            20,  // Initial pool size
+            50   // Max pool size
+        );
+        
+        SnowflakeExplosion._poolsInitialized = true;
+    }
+    
     constructor(canvas, x, y, color, size = 1, particleCount = 25) {
+        // Initialize pools if not already done
+        SnowflakeExplosion.initPools(canvas);
+    
         this.canvas = canvas;
         this.x = x;
         this.y = y;
         this.color = color;
         this.size = size * CONSTANTS.EXPLOSION_SIZE_MULTIPLIER;
-        this.particleCount = particleCount * CONSTANTS.EXPLOSION_PARTICLE_MULTIPLIER;
+        this.particleCount = Math.round(particleCount * CONSTANTS.EXPLOSION_PARTICLE_MULTIPLIER);
         this.particles = [];
+        this.burstRays = [];
         this.lifespan = CONSTANTS.EXPLOSION_LIFESPAN;
         this.age = 0;
         this.active = true;
@@ -707,32 +845,26 @@ class SnowflakeExplosion {
             particlesCreated: this.particles.length
         };
     }
-    
-    /**
+      /**
      * Generate a complementary color to the main color
      */
     generateComplementaryColor(color) {
-        // Simple complementary color - invert RGB
-        return {
-            r: 255 - color.r,
-            g: 255 - color.g,
-            b: 255 - color.b
-        };
+        // Use shared ColorUtils implementation
+        return ColorUtils.getComplementaryColor(color);
     }
     
     /**
      * Generate an accent color (shifted hue)
      */
     generateAccentColor(color) {
-        // Convert RGB to HSL, shift hue by 60 degrees, convert back
-        const [h, s, l] = ColorUtils.rgbToHsl(color.r, color.g, color.b);
-        const newHue = (h + 60) % 360;
-        const [r, g, b] = ColorUtils.hslToRgb(newHue, s, l);
-        return { r, g, b };
+        // Use shared ColorUtils implementation
+        return ColorUtils.getAccentColor(color);
     }
     
     /**
      * Create the central burst effect
+     */    /**
+     * Create the burst effect using object pooling for better performance
      */
     createBurstEffect() {
         this.burstRays = [];
@@ -745,13 +877,16 @@ class SnowflakeExplosion {
                 this.size * CONSTANTS.BURST_RAY_LENGTH_MIN, 
                 this.size * CONSTANTS.BURST_RAY_LENGTH_MAX
             );
+            const width = this.canvas.random(2, 5) * this.size / 2;
+            const color = this.canvas.random() < 0.5 ? this.secondaryColor : this.tertiaryColor;
             
-            const ray = new BurstRay(
+            // Get a ray from the pool instead of creating a new one
+            const ray = SnowflakeExplosion.rayPool.get(
                 this.canvas,
                 angle, 
                 length,
-                this.canvas.random(2, 5) * this.size / 2,
-                this.canvas.random() < 0.5 ? this.secondaryColor : this.tertiaryColor
+                width,
+                color
             );
             
             this.burstRays.push(ray);
@@ -763,6 +898,8 @@ class SnowflakeExplosion {
     
     /**
      * Create particles for the explosion
+     */    /**
+     * Create particles for the explosion using object pooling for better performance
      */
     createParticles() {
         const particleTypes = ['snowflake', 'sparkle', 'dust', 'crystal']; 
@@ -789,8 +926,8 @@ class SnowflakeExplosion {
             // Select particle color
             const particleColor = this.selectParticleColor();
             
-            // Create and add particle
-            const particle = new ExplosionParticle(
+            // Get a particle from the pool instead of creating a new one
+            const particle = SnowflakeExplosion.particlePool.get(
                 this.canvas,
                 this.x,
                 this.y,
@@ -927,18 +1064,53 @@ class SnowflakeExplosion {
         
         this.canvas.pop();
     }
-    
-    /**
-     * Check if the explosion is finished
+      /**
+     * Check if the explosion is finished and release resources to pools if it is
+     * @returns {boolean} Whether the explosion is finished
      */
     isFinished() {
-        return !this.active;
+        if (!this.active) {
+            // Return particles to pool
+            for (let particle of this.particles) {
+                SnowflakeExplosion.particlePool.release(particle);
+            }
+            
+            // Return burst rays to pool
+            if (this.burstRays) {
+                for (let ray of this.burstRays) {
+                    SnowflakeExplosion.rayPool.release(ray);
+                }
+            }
+            
+            // Clear references for garbage collection
+            this.particles = [];
+            this.burstRays = [];
+            
+            return true;
+        }
+        return false;
     }
 }
 
 /**
  * Snowflakes Theme class that extends the base Theme
- * Integrated with state management system
+ * 
+ * This class orchestrates the entire snowflake visual effect, including:
+ * - Managing collections of snowflake objects
+ * - Handling audio reactivity through explosion effects
+ * - Managing color schemes and theme settings
+ * - Processing user interactions and state changes
+ * 
+ * The architecture follows a component-based design where the main theme class
+ * delegates rendering and behavior to smaller specialized classes (Snowflake, 
+ * Explosion, Particle, etc.). This makes the code more maintainable and serves
+ * as a good template for creating new themes.
+ * 
+ * Integration points:
+ * - Extends the base Theme class
+ * - Uses stateManager for configuration persistence
+ * - Implements required lifecycle methods (setup, draw, etc.)
+ * - Provides audio reactivity via onAudioFeature method
  */
 class SnowflakesTheme extends Theme {
     constructor(stateManager = null) {
@@ -1107,96 +1279,257 @@ class SnowflakesTheme extends Theme {
         // Add to explosions array
         this.explosions.push(explosion);
     }
-    
+      /**
+     * Apply configuration from the state manager with safety checks
+     * This method handles missing or invalid configuration values gracefully
+     */
     applyStateConfig() {
         if (!this.stateManager) return;
         
-        const config = this.stateManager.getStateSection('themeConfigs.snowflakes');
-        if (!config) return;
-        
-        this.setBackgroundColor(config.backgroundColor);
-        this.setSnowflakeColor(config.snowflakeColor);
-        this.setNumberOfSnowflakes(config.count);
-        
-        const sizeMultiplier = config.size / 10;
-        this.setSizeMultiplier(sizeMultiplier);
-        
-        this.setSpeedMultiplier(config.speed);
-        
-        const wobbleIntensity = config.wobbleIntensity / 10;
-        this.setWobbleIntensity(wobbleIntensity);
-        
-        this.setWind(config.windStrength, config.windDirection);
-        
-        if (this.audioManager && typeof this.audioManager.getThreshold === 'function') {
-            this.effectsConfig.triggerThreshold = this.audioManager.getThreshold();
-            this.logDebug(`Using AudioManager threshold ${this.effectsConfig.triggerThreshold}`);
+        try {
+            const config = this.stateManager.getStateSection('themeConfigs.snowflakes');
+            if (!config) {
+                this.logDebug('No snowflakes theme config found in state');
+                return;
+            }
+            
+            // Apply each config with validation checks
+            
+            // Colors
+            if (config.backgroundColor) {
+                this.setBackgroundColor(config.backgroundColor);
+            }
+            
+            if (config.snowflakeColor) {
+                this.setSnowflakeColor(config.snowflakeColor);
+            }
+            
+            // Snowflake properties
+            if (typeof config.count === 'number') {
+                this.setNumberOfSnowflakes(config.count);
+            }
+            
+            if (typeof config.size === 'number') {
+                const sizeMultiplier = config.size / 10;
+                this.setSizeMultiplier(sizeMultiplier);
+            }
+            
+            if (typeof config.speed === 'number') {
+                this.setSpeedMultiplier(config.speed);
+            }
+            
+            if (typeof config.wobbleIntensity === 'number') {
+                const wobbleIntensity = config.wobbleIntensity / 10;
+                this.setWobbleIntensity(wobbleIntensity);
+            }
+            
+            // Wind properties
+            if (typeof config.windStrength === 'number' && typeof config.windDirection === 'number') {
+                this.setWind(config.windStrength, config.windDirection);
+            }
+            
+            // Audio reaction settings
+            if (this.audioManager && typeof this.audioManager.getThreshold === 'function') {
+                try {
+                    this.effectsConfig.triggerThreshold = this.audioManager.getThreshold();
+                    this.logDebug(`Using AudioManager threshold ${this.effectsConfig.triggerThreshold}`);
+                } catch (error) {
+                    this.logDebug(`Error getting audio threshold: ${error.message}`);
+                }
+            }
+            
+            this.logDebug('Audio reactive config initialized', this.effectsConfig);
+            
+            // Apply running state
+            if (this.stateManager.state.isRunning) {
+                this.start();
+            } else {
+                this.stop();
+            }
+        } catch (error) {
+            this.logDebug(`Error applying state config: ${error.message}`);
+            
+            // Ensure theme is in a valid state even after an error
+            this.setup();
         }
-        
-        this.logDebug('Audio reactive config initialized', this.effectsConfig);
-        
-        if (this.stateManager.state.isRunning) {
-            this.start();
-        } else {
-            this.stop();
-        }
-    }
-
+    }/**
+     * Set the number of snowflakes with validation and error handling
+     * @param {number} num - The number of snowflakes to display
+     */
     setNumberOfSnowflakes(num) {
+        // Validate the input
+        const safeNum = this.validateNumber(num, 1, 1000, this.numSnowflakes);
+        if (safeNum !== num) {
+            this.logDebug(`Invalid snowflake count (${num}), using ${safeNum} instead`);
+        }
+        
         const previouslyRunning = this.isRunning;
         
-        if (previouslyRunning) {
-            this.isRunning = false;
-        }
-        
-        this.numSnowflakes = num;
-        this.updateSnowflakes();
-        
-        if (previouslyRunning) {
-            this.isRunning = true;
+        try {
+            if (previouslyRunning) {
+                this.isRunning = false;
+            }
+            
+            this.numSnowflakes = safeNum;
+            this.updateSnowflakes();
+        } catch (error) {
+            this.logDebug(`Error setting snowflake count: ${error.message}`);
+        } finally {
+            if (previouslyRunning) {
+                this.isRunning = true;
+            }
         }
     }
-
+    
+    /**
+     * Validate a numeric value with bounds checking
+     * @param {any} value - The value to validate
+     * @param {number} min - Minimum acceptable value
+     * @param {number} max - Maximum acceptable value
+     * @param {number} defaultValue - Fallback value if validation fails
+     * @returns {number} - The validated number
+     */
+    validateNumber(value, min, max, defaultValue) {
+        const num = Number(value);
+        if (isNaN(num) || num < min || num > max) {
+            return defaultValue;
+        }
+        return num;
+    }    /**
+     * Set the size multiplier for snowflakes with validation
+     * @param {number} multiplier - The size multiplier
+     */
     setSizeMultiplier(multiplier) {
-        this.sizeMultiplier = multiplier;
-        for (let snowflake of this.snowflakes) {
-            snowflake.setSizeMultiplier(this.sizeMultiplier);
+        // Validate the input
+        const safeMultiplier = this.validateNumber(multiplier, 0.1, 10, this.sizeMultiplier);
+        if (safeMultiplier !== multiplier) {
+            this.logDebug(`Invalid size multiplier (${multiplier}), using ${safeMultiplier} instead`);
+        }
+        
+        try {
+            this.sizeMultiplier = safeMultiplier;
+            for (let snowflake of this.snowflakes) {
+                snowflake.setSizeMultiplier(this.sizeMultiplier);
+            }
+        } catch (error) {
+            this.logDebug(`Error setting size multiplier: ${error.message}`);
         }
     }
 
+    /**
+     * Set the speed multiplier for snowflakes with validation
+     * @param {number} multiplier - The speed multiplier
+     */
     setSpeedMultiplier(multiplier) {
-        this.speedMultiplier = multiplier;
-        for (let snowflake of this.snowflakes) {
-            snowflake.setSpeedMultiplier(this.speedMultiplier);
+        // Validate the input
+        const safeMultiplier = this.validateNumber(multiplier, 0.1, 10, this.speedMultiplier);
+        if (safeMultiplier !== multiplier) {
+            this.logDebug(`Invalid speed multiplier (${multiplier}), using ${safeMultiplier} instead`);
         }
-    }
-    
-    setWobbleIntensity(intensity) {
-        this.wobbleIntensity = intensity;
-        for (let snowflake of this.snowflakes) {
-            snowflake.setWobbleIntensity(intensity);
-        }
-    }
-    
-    setWind(strength, direction) {
-        this.windStrength = strength;
-        this.windDirection = direction;
-        for (let snowflake of this.snowflakes) {
-            snowflake.setWind(strength, direction);
-        }
-    }
-    
-    setSnowflakeColor(hexColor) {
-        const rgb = ColorUtils.hexToRgb(hexColor);
-        this.snowflakeColor = rgb;
         
-        for (let snowflake of this.snowflakes) {
-            snowflake.setColor(rgb.r, rgb.g, rgb.b);
+        try {
+            this.speedMultiplier = safeMultiplier;
+            for (let snowflake of this.snowflakes) {
+                snowflake.setSpeedMultiplier(this.speedMultiplier);
+            }
+        } catch (error) {
+            this.logDebug(`Error setting speed multiplier: ${error.message}`);
         }
     }
     
+    /**
+     * Set the wobble intensity for snowflakes with validation
+     * @param {number} intensity - The wobble intensity
+     */
+    setWobbleIntensity(intensity) {
+        // Validate the input
+        const safeIntensity = this.validateNumber(intensity, 0, 10, this.wobbleIntensity);
+        if (safeIntensity !== intensity) {
+            this.logDebug(`Invalid wobble intensity (${intensity}), using ${safeIntensity} instead`);
+        }
+        
+        try {
+            this.wobbleIntensity = safeIntensity;
+            for (let snowflake of this.snowflakes) {
+                snowflake.setWobbleIntensity(safeIntensity);
+            }
+        } catch (error) {
+            this.logDebug(`Error setting wobble intensity: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Set the wind properties for snowflakes with validation
+     * @param {number} strength - The wind strength
+     * @param {number} direction - The wind direction in degrees
+     */
+    setWind(strength, direction) {
+        // Validate inputs
+        const safeStrength = this.validateNumber(strength, 0, 20, this.windStrength);
+        const safeDirection = this.validateNumber(direction, 0, 360, this.windDirection);
+        
+        if (safeStrength !== strength || safeDirection !== direction) {
+            this.logDebug(`Invalid wind properties (${strength}, ${direction}), using (${safeStrength}, ${safeDirection}) instead`);
+        }
+        
+        try {
+            this.windStrength = safeStrength;
+            this.windDirection = safeDirection;
+            for (let snowflake of this.snowflakes) {
+                snowflake.setWind(safeStrength, safeDirection);
+            }
+        } catch (error) {
+            this.logDebug(`Error setting wind properties: ${error.message}`);
+        }
+    }
+      /**
+     * Set the snowflake color with validation and error handling
+     * @param {string} hexColor - The color in hex format (#RRGGBB)
+     */
+    setSnowflakeColor(hexColor) {
+        try {
+            // Validate hex color format
+            if (!this.validateHexColor(hexColor)) {
+                this.logDebug(`Invalid hex color: ${hexColor}, using default color instead`);
+                return;
+            }
+            
+            const rgb = ColorUtils.hexToRgb(hexColor);
+            this.snowflakeColor = rgb;
+            
+            for (let snowflake of this.snowflakes) {
+                snowflake.setColor(rgb.r, rgb.g, rgb.b);
+            }
+        } catch (error) {
+            this.logDebug(`Error setting snowflake color: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Set the background color with validation and error handling
+     * @param {string} hexColor - The color in hex format (#RRGGBB)
+     */
     setBackgroundColor(hexColor) {
-        this.backgroundColor = ColorUtils.hexToRgb(hexColor);
+        try {
+            // Validate hex color format
+            if (!this.validateHexColor(hexColor)) {
+                this.logDebug(`Invalid hex color: ${hexColor}, using default background color instead`);
+                return;
+            }
+            
+            this.backgroundColor = ColorUtils.hexToRgb(hexColor);
+        } catch (error) {
+            this.logDebug(`Error setting background color: ${error.message}`);
+        }
+    }
+    
+    /**
+     * Validate a hex color string
+     * @param {string} color - The hex color to validate
+     * @returns {boolean} Whether the color is valid
+     */
+    validateHexColor(color) {
+        return typeof color === 'string' && /^#([0-9A-F]{3}){1,2}$/i.test(color);
     }
 
     updateSnowflakes() {
@@ -1215,35 +1548,76 @@ class SnowflakesTheme extends Theme {
         for (let i = 0; i < this.numSnowflakes; i++) {
             this.snowflakes.push(this.createConfiguredSnowflake(true));
         }
-    }
-
+    }    /**
+     * Update all elements of the theme with improved safety checks
+     */
     update() {
         if (!this.isRunning) return;
         
-        for (let snowflake of this.snowflakes) {
-            snowflake.update();
-        }
-        
-        for (let i = this.explosions.length - 1; i >= 0; i--) {
-            this.explosions[i].update();
-            
-            if (this.explosions[i].isFinished()) {
-                this.explosions.splice(i, 1);
+        try {
+            // Update snowflakes with safety check
+            if (Array.isArray(this.snowflakes)) {
+                for (let snowflake of this.snowflakes) {
+                    if (snowflake && typeof snowflake.update === 'function') {
+                        snowflake.update();
+                    }
+                }
             }
+            
+            // Update explosions with safety check
+            if (Array.isArray(this.explosions)) {
+                for (let i = this.explosions.length - 1; i >= 0; i--) {
+                    if (this.explosions[i] && typeof this.explosions[i].update === 'function') {
+                        this.explosions[i].update();
+                        
+                        if (this.explosions[i].isFinished()) {
+                            this.explosions.splice(i, 1);
+                        }
+                    } else {
+                        // Remove invalid explosion objects
+                        this.explosions.splice(i, 1);
+                    }
+                }
+            }
+        } catch (error) {
+            this.logDebug(`Error in update: ${error.message}`);
         }
     }
 
+    /**
+     * Draw all elements of the theme with improved safety checks
+     */
     draw() {
         if (!this.isRunning) return;
 
-        this.canvas.background(this.backgroundColor.r, this.backgroundColor.g, this.backgroundColor.b);
-        
-        for (let snowflake of this.snowflakes) {
-            snowflake.draw();
-        }
-        
-        for (let explosion of this.explosions) {
-            explosion.draw();
+        try {
+            if (this.canvas && typeof this.canvas.background === 'function') {
+                this.canvas.background(
+                    this.backgroundColor.r || 0, 
+                    this.backgroundColor.g || 0, 
+                    this.backgroundColor.b || 0
+                );
+            }
+            
+            // Draw snowflakes with safety check
+            if (Array.isArray(this.snowflakes)) {
+                for (let snowflake of this.snowflakes) {
+                    if (snowflake && typeof snowflake.draw === 'function') {
+                        snowflake.draw();
+                    }
+                }
+            }
+            
+            // Draw explosions with safety check
+            if (Array.isArray(this.explosions)) {
+                for (let explosion of this.explosions) {
+                    if (explosion && typeof explosion.draw === 'function') {
+                        explosion.draw();
+                    }
+                }
+            }
+        } catch (error) {
+            this.logDebug(`Error in draw: ${error.message}`);
         }
     }
 

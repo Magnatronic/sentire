@@ -13,7 +13,7 @@ class ThemeManager {
         }, 'theme');
         
         this.stateManager.subscribe({
-            update: this.onStateUpdate.bind(this)
+            update: this.onStateUpdate.bind(this) 
         }, 'appState');
         
         if (this.stateManager.state.debug) {

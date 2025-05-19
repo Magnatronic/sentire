@@ -312,94 +312,20 @@ class BubbleBurst {
             console.log(`BubbleBurst: Created new bubble burst effect`, this._debugInfo);
         }
     }
-    
-    /**
+      /**
      * Generate a complementary color to the main color
      */
     generateComplementaryColor(color) {
-        // Simple complementary color - invert RGB
-        return {
-            r: 255 - color.r,
-            g: 255 - color.g,
-            b: 255 - color.b
-        };
+        // Use shared ColorUtils implementation
+        return ColorUtils.getComplementaryColor(color);
     }
     
     /**
      * Generate an accent color (shifted hue)
      */
     generateAccentColor(color) {
-        // Convert RGB to HSL, shift hue by 40 degrees, convert back
-        const [h, s, l] = this.rgbToHsl(color.r, color.g, color.b);
-        const newHue = (h + 40) % 360;
-        const [r, g, b] = this.hslToRgb(newHue, s, l);
-        return { r, g, b };
-    }
-    
-    /**
-     * Convert RGB to HSL color space
-     */
-    rgbToHsl(r, g, b) {
-        r /= 255;
-        g /= 255;
-        b /= 255;
-        
-        const max = Math.max(r, g, b);
-        const min = Math.min(r, g, b);
-        let h, s, l = (max + min) / 2;
-        
-        if (max === min) {
-            h = s = 0; // achromatic
-        } else {
-            const d = max - min;
-            s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-            
-            switch (max) {
-                case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-                case g: h = (b - r) / d + 2; break;
-                case b: h = (r - g) / d + 4; break;
-            }
-            
-            h = Math.round(h * 60);
-        }
-        
-        s = Math.round(s * 100);
-        l = Math.round(l * 100);
-        
-        return [h, s, l];
-    }
-    
-    /**
-     * Convert HSL to RGB color space
-     */
-    hslToRgb(h, s, l) {
-        h /= 360;
-        s /= 100;
-        l /= 100;
-        
-        let r, g, b;
-        
-        if (s === 0) {
-            r = g = b = l; // achromatic
-        } else {
-            const hue2rgb = (p, q, t) => {
-                if (t < 0) t += 1;
-                if (t > 1) t -= 1;
-                if (t < 1/6) return p + (q - p) * 6 * t;
-                if (t < 1/2) return q;
-                if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-                return p;
-            };
-            
-            const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-            const p = 2 * l - q;
-            
-            r = hue2rgb(p, q, h + 1/3);
-            g = hue2rgb(p, q, h);
-            b = hue2rgb(p, q, h - 1/3);
-        }
-        
-        return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        // Use shared ColorUtils implementation with a different hue shift value
+        return ColorUtils.getAccentColor(color, 40);
     }
     
     /**
@@ -1432,29 +1358,18 @@ class UnderwaterTheme extends Theme {
         for (let bubble of this.bubbles) {
             bubble.setCurrent(strength, direction);
         }
-    }
-    
-    setBubbleColor(hexColor) {
-        // Convert hex color to RGB
-        const r = parseInt(hexColor.substr(1, 2), 16);
-        const g = parseInt(hexColor.substr(3, 2), 16);
-        const b = parseInt(hexColor.substr(5, 2), 16);
-        
-        this.bubbleColor = { r, g, b };
+    }    setBubbleColor(hexColor) {
+        // Convert hex color to RGB using shared ColorUtils
+        this.bubbleColor = ColorUtils.hexToRgb(hexColor);
         
         // Update existing bubbles
         for (let bubble of this.bubbles) {
-            bubble.setColor(r, g, b);
+            bubble.setColor(this.bubbleColor.r, this.bubbleColor.g, this.bubbleColor.b);
         }
     }
-    
-    setBackgroundColor(hexColor) {
-        // Convert hex color to RGB
-        const r = parseInt(hexColor.substr(1, 2), 16);
-        const g = parseInt(hexColor.substr(3, 2), 16);
-        const b = parseInt(hexColor.substr(5, 2), 16);
-        
-        this.backgroundColor = { r, g, b };
+      setBackgroundColor(hexColor) {
+        // Convert hex color to RGB using shared ColorUtils
+        this.backgroundColor = ColorUtils.hexToRgb(hexColor);
     }
 
     setPlanktonSizeMultiplier(multiplier) {
