@@ -52,24 +52,10 @@ function draw() {
   if (!themeManager) return;
   
   const currentTheme = themeManager.currentTheme;
-  
-  if (currentTheme) {
+    if (currentTheme) {
     // Update and draw the current theme
     currentTheme.update();
     currentTheme.draw();
-    
-    // Draw audio visualizer if audio manager exists and is initialized
-    if (audioManager && audioManager.isInitialized) {
-      // Draw audio visualizer in bottom right corner of the canvas
-      const visualizerWidth = 200;
-      const visualizerHeight = 100;
-      const padding = 20;
-      const visualizerX = width - visualizerWidth - padding;
-      const visualizerY = height - visualizerHeight - padding;
-      
-      // Draw audio visualizer
-      audioManager.drawDebugVisualizer(this, visualizerX, visualizerY, visualizerWidth, visualizerHeight);
-    }
   }
 }
 
