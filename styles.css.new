@@ -148,6 +148,7 @@ button:disabled {
 
 .slider {
     -webkit-appearance: none;
+    appearance: none;
     flex: 1;
     height: 8px;
     background: #444;
@@ -302,6 +303,7 @@ slider::-moz-range-thumb {
 
 input[type="color"] {
     -webkit-appearance: none;
+    appearance: none;
     width: 100%;
     height: 30px;
     border: none;
@@ -422,93 +424,6 @@ input[type="color"]::-webkit-color-swatch {
 }
 
 /* Audio Visualizer Styles */
-
-.state-tree-row {
-    display: flex;
-    line-height: 1.5;
-    margin: 2px 0;
-}
-
-.state-tree-row.highlight-match {
-    background-color: rgba(86, 156, 214, 0.2);
-    border-radius: 3px;
-}
-
-.state-tree-children {
-    margin-left: 20px;
-    border-left: 1px dashed #3c3c3c;
-    padding-left: 8px;
-}
-
-.state-key {
-    color: #9cdcfe;
-    margin-right: 8px;
-    min-width: 100px;
-    max-width: 200px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.state-value-container {
-    display: flex;
-    align-items: center;
-    flex: 1;
-}
-
-.state-expander {
-    background: none;
-    border: none;
-    color: #cccccc;
-    cursor: pointer;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-    margin-right: 4px;
-    font-size: 10px;
-}
-
-.state-preview {
-    color: #cccccc;
-    font-style: italic;
-}
-
-.state-value {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 200px;
-}
-
-.state-string {
-    color: #ce9178;
-}
-
-.state-number {
-    color: #b5cea8;
-}
-
-.state-boolean {
-    color: #569cd6;
-}
-
-.state-null, .state-undefined {
-    color: #569cd6;
-    font-style: italic;
-}
-
-.state-function {
-    color: #dcdcaa;
-    font-style: italic;
-}
-
-
-
-/* Modal Styles */
-
-
 
 /* Panel header styles for better touch feedback */
 .panel-header-clickable {
