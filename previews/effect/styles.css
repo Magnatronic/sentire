@@ -1,0 +1,781 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #121212;
+    color: #ffffff;
+    overflow: hidden; /* Prevent scrolling */
+    height: 100vh; /* Full viewport height */
+}
+
+/* Main app container with sidebar layout */
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Sidebar for controls */
+.sidebar {
+    width: 280px;
+    background-color: rgba(30, 30, 40, 0.9);
+    padding: 20px;
+    box-sizing: border-box;
+    height: 100%;
+    overflow-y: auto; /* Allow scrolling within sidebar if needed */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-right: 1px solid #333;
+    transition: transform 0.3s ease;
+    z-index: 100;
+}
+
+/* Mobile sidebar toggle button */
+.sidebar-toggle {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    background-color: rgba(42, 92, 168, 0.8);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 20px;
+    z-index: 1000;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    align-items: center;
+    justify-content: center;
+}
+
+/* Style for when the sidebar is hidden on mobile */
+.sidebar-hidden {
+    transform: translateY(-100%);
+    max-height: 0;
+}
+
+/* Main content area containing canvas */
+.main-content {
+    flex: 1;
+    height: 100%;
+    position: relative;
+}
+
+/* Theme selector styles */
+.theme-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.theme-selector label {
+    font-size: 14px;
+    color: #ccc;
+}
+
+select {
+    padding: 8px 10px;
+    border-radius: 5px;
+    border: none;
+    background-color: #333;
+    color: white;
+    cursor: pointer;
+    width: 100%;
+}
+
+/* Button styles */
+.buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+button {
+    padding: 10px;
+    border-radius: 5px;
+    border: none;
+    background-color: #333;
+    color: white;
+    cursor: pointer;
+    width: 100%;
+    font-size: 14px;
+}
+
+button:hover {
+    background-color: #444;
+}
+
+button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+#fullscreen-btn {
+    background-color: #2a5ca8;
+}
+
+#fullscreen-btn:hover {
+    background-color: #3470cc;
+}
+
+/* Theme control sliders */
+.theme-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.slider-container label {
+    font-size: 14px;
+    color: #ccc;
+}
+
+.slider-with-value {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slider {
+    -webkit-appearance: none;
+    flex: 1;
+    height: 8px;
+    background: #444;
+    outline: none;
+    border-radius: 4px;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #2a5ca8;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #2a5ca8;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+}
+
+.slider-value {
+    font-size: 14px;
+    color: #fff;
+    min-width: 30px;
+    text-align: right;
+}
+
+/* Canvas container styles */
+#canvas-container {
+    width: 100%;
+    height: 100%;
+    background-color: #000000;
+}
+
+/* Make sure the p5.js canvas fills the container */
+#canvas-container canvas {
+    display: block; /* Removes tiny gaps */
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Fullscreen specific styles */
+.fullscreen-active .sidebar {
+    transform: translateX(-100%); /* Hide sidebar when in fullscreen */
+    pointer-events: none;
+}
+
+.fullscreen-active:hover .sidebar {
+    transform: translateX(0); /* Show sidebar on hover when in fullscreen */
+    pointer-events: auto;
+}
+
+.fullscreen-active #canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9000;
+}
+
+/* For browsers that support native fullscreen */
+#canvas-container:fullscreen {
+    width: 100vw;
+    height: 100vh;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+        max-height: 50vh;
+        border-right: none;
+        border-bottom: 1px solid #333;
+    }
+    
+    .main-content {
+        height: 50vh;
+    }
+    
+    .sidebar-toggle {
+        display: flex;
+    }
+    
+    /* Animation for sidebar */
+    .sidebar {
+        transition: transform 0.3s ease, max-height 0.3s ease;
+    }
+}
+
+/* Responsive grid layout for tablets and large phones in landscape */
+@media (min-width: 600px) and (max-width: 768px) {
+    /* Use a grid layout for sliders to make better use of horizontal space */
+    .display-settings-content .theme-controls {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+    
+    /* Keep color pickers at full width */
+    .color-pickers {
+        grid-column: 1 / -1;
+    }
+    
+    /* Better arrangement of audio controls on landscape */
+    .audio-controls-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    
+    /* Audio visualizer should span full width */
+    .audio-visualizer-container {
+        grid-column: 1 / -1;
+    }
+    
+    /* Audio toggle button at full width */
+    .audio-toggle {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Color picker styles */
+.color-pickers {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.color-picker-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.color-picker-container label {
+    font-size: 14px;
+    color: #ccc;
+}
+
+input[type="color"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 30px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+/* Audio controls section */
+.audio-controls {
+    background-color: rgba(40, 40, 50, 0.5);
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+/* Completely reset the collapsible panels CSS */
+/* Audio Controls Section - Direct style approach */
+.audio-controls h3 {
+    margin: 0;
+    padding: 10px 0;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+    border-bottom: 1px solid #444;
+}
+
+.audio-controls h3::after {
+    content: "▼";
+    float: right;
+    transition: transform 0.3s;
+}
+
+.audio-controls.collapsed h3::after {
+    content: "▶";
+}
+
+/* Explicit style for display settings */
+.display-settings h3 {
+    margin: 0;
+    padding: 10px 0;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+    border-bottom: 1px solid #444;
+}
+
+.display-settings h3::after {
+    content: "▼";
+    float: right;
+    transition: transform 0.3s;
+}
+
+.display-settings.collapsed h3::after {
+    content: "▶";
+}
+
+/* Display Settings Panel */
+.display-settings {
+    background-color: rgba(40, 40, 50, 0.5);
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+
+.display-settings-content {
+    padding-top: 15px;
+    display: block;
+}
+
+.display-settings.collapsed .display-settings-content {
+    display: none;
+}
+
+/* Audio toggle */
+.audio-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.toggle-btn {
+    padding: 8px 15px;
+    background-color: #4a4a4a;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+    max-width: 200px;
+}
+
+.toggle-btn.active {
+    background-color: #f44336;
+}
+
+.audio-visualizer-container {
+    background-color: #222;
+    border-radius: 4px;
+    padding: 5px;
+    margin-top: 5px;
+}
+
+#audio-visualizer {
+    width: 100%;
+    height: 80px;
+    display: block;
+    border-radius: 3px;
+}
+
+/* Audio Visualizer Styles */
+
+.state-tree-row {
+    display: flex;
+    line-height: 1.5;
+    margin: 2px 0;
+}
+
+.state-tree-row.highlight-match {
+    background-color: rgba(86, 156, 214, 0.2);
+    border-radius: 3px;
+}
+
+.state-tree-children {
+    margin-left: 20px;
+    border-left: 1px dashed #3c3c3c;
+    padding-left: 8px;
+}
+
+.state-key {
+    color: #9cdcfe;
+    margin-right: 8px;
+    min-width: 100px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.state-value-container {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.state-expander {
+    background: none;
+    border: none;
+    color: #cccccc;
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
+    margin-right: 4px;
+    font-size: 10px;
+}
+
+.state-preview {
+    color: #cccccc;
+    font-style: italic;
+}
+
+.state-value {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.state-string {
+    color: #ce9178;
+}
+
+.state-number {
+    color: #b5cea8;
+}
+
+.state-boolean {
+    color: #569cd6;
+}
+
+.state-null, .state-undefined {
+    color: #569cd6;
+    font-style: italic;
+}
+
+.state-function {
+    color: #dcdcaa;
+    font-style: italic;
+}
+
+
+
+/* Modal Styles */
+
+
+
+/* Panel header styles for better touch feedback */
+.panel-header-clickable {
+    position: relative;
+    padding: 10px 0;
+    margin: -10px 0;
+    z-index: 5;
+}
+
+/* Visual feedback for touch interactions */
+.touch-active {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+/* Enhanced mobile styles for panel headers */
+@media (max-width: 768px) {
+    .audio-controls h3,
+    .display-settings h3 {
+        padding: 12px 0;
+        font-size: 18px;
+    }
+    
+    .audio-controls h3::after,
+    .display-settings h3::after {
+        font-size: 14px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+    }
+    
+    /* Make sure touch targets are large enough on mobile (at least 44x44px) */
+    .panel-header-clickable {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* Touch-friendly controls for mobile devices */
+@media (max-width: 768px) {
+    /* Make slider thumbs larger for easier touch */
+    .slider::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .slider::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+    }
+    
+    /* Increase height of the slider track for easier targeting */
+    .slider {
+        height: 12px;
+        margin: 10px 0;
+    }
+    
+    /* Larger text for readability */
+    .slider-container label {
+        font-size: 16px;
+    }
+    
+    .slider-value {
+        font-size: 16px;
+        min-width: 36px;
+    }
+    
+    /* Larger, more touch-friendly buttons */
+    button {
+        padding: 14px 10px;
+        font-size: 16px;
+        min-height: 48px;
+    }
+    
+    /* More spacing between controls for touch */
+    .slider-container {
+        margin-bottom: 16px;
+    }
+    
+    /* Larger color pickers */
+    input[type="color"] {
+        height: 40px;
+    }
+    
+    /* Better spacing in the sidebar */
+    .sidebar {
+        padding: 16px;
+        gap: 16px;
+    }
+}
+
+/* Enhanced touch focus and active states */
+@media (max-width: 768px) {
+    /* Better focus indicators for improved accessibility */
+    button:focus,
+    input:focus,
+    select:focus {
+        outline: 3px solid rgba(74, 144, 226, 0.6);
+        outline-offset: 2px;
+    }
+    
+    /* Touch feedback for controls */
+    button:active,
+    .slider:active::-webkit-slider-thumb,
+    input[type="color"]:active {
+        transform: scale(0.96);
+        transition: transform 0.1s ease;
+    }
+    
+    /* Increase spacing in nested theme control sections */
+    .theme-controls {
+        padding: 10px;
+        margin-top: 5px;
+    }
+    
+    /* Add proper scroll momentum for mobile */
+    .sidebar {
+        -webkit-overflow-scrolling: touch;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+    
+    /* Increase tap target size for select dropdown */
+    select {
+        height: 44px;
+        font-size: 16px; /* Prevents iOS zoom on focus */
+        padding: 10px;
+    }
+}
+
+/* Mobile-optimized collapsible panels - Revised for better scrolling */
+.panel-header {
+    position: relative;
+    padding: 10px 8px;
+    margin: 0;
+    font-size: 16px;
+    color: #ffffff;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    touch-action: manipulation;
+}
+
+.panel-header::after {
+    content: "▼";
+    font-size: 12px;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+}
+
+.collapsed .panel-header::after {
+    content: "▶";
+}
+
+.panel-header:active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.panel-content {
+    max-height: 1000px;
+    overflow: hidden;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+}
+
+.collapsed .panel-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+/* Specific styling for audio controls panel */
+.audio-controls .panel-header {
+    background-color: rgba(60, 60, 80, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Specific styling for display settings panel */
+.display-settings .panel-header {
+    background-color: rgba(60, 60, 80, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Revised mobile styles - more compact but still touch-friendly */
+@media (max-width: 768px) {
+    .panel-header {
+        padding: 12px 10px;
+        font-size: 16px;
+        min-height: 44px; /* Standard minimum size for touch targets */
+    }
+    
+    .panel-header::after {
+        font-size: 12px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+    }
+    
+    /* More compact controls for mobile */
+    .slider-container {
+        margin-bottom: 10px;
+    }
+    
+    .slider-container label {
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+    
+    /* More compact but still touch-friendly sliders */
+    .slider {
+        height: 10px;
+    }
+    
+    .slider::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+    }
+    
+    /* More compact buttons */
+    button {
+        padding: 10px 8px;
+        font-size: 14px;
+        min-height: 44px;
+    }
+    
+    /* More compact spacing */
+    .sidebar {
+        padding: 12px;
+        gap: 12px;
+    }
+    
+    /* More efficient use of space */
+    .theme-controls {
+        padding: 8px 4px;
+        margin-top: 4px;
+    }
+    
+    /* More compact color pickers */
+    input[type="color"] {
+        height: 32px;
+    }
+    
+    /* Better spacing between sections */
+    .audio-controls,
+    .display-settings {
+        margin-bottom: 8px;
+        padding: 10px;
+    }
+    
+    /* More compact panel content */
+    .panel-content {
+        padding-top: 10px;
+    }
+}
